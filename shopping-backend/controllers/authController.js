@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
-// Sign In Controller
 const signIn = async (req, res) => {
   const { email, password } = req.body;
 
@@ -16,9 +15,8 @@ const signIn = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Create JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d', // Token expires in 7 days
+      expiresIn: '7d', 
     });
 
     res.status(200).json({

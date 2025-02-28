@@ -5,7 +5,7 @@ const CategorySchema = new mongoose.Schema({
   name: String,
   description: String,
   image: String,
-  subcategories: [SubCategorySchema], // Store subcategories inside category
+  subcategories: [SubCategorySchema], 
 });
 
 module.exports = mongoose.model("Category", CategorySchema);

@@ -33,6 +33,7 @@ const validationSchema = Yup.object({
 });
 
 const EditCategory = ({ initialData, onSubmit }) => {
+        console.log("Initial Data in EditCategory:", initialData);  
     const [open, setOpen] = useState(false);
     const [categoryImage, setCategoryImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(initialData?.image || null);
@@ -53,38 +54,27 @@ const EditCategory = ({ initialData, onSubmit }) => {
         }
     };
 
-    const handleSubmit = async (values, { resetForm }) => {
+    const handleUpdateCategory = async (values) => {
+        if (!initialData?._id) {
+            console.error("Error: Category ID is missing.");
+            return;
+        }
+
         try {
             const formData = new FormData();
             formData.append("name", values.name);
             formData.append("description", values.description);
-            if (values.image) formData.append("image", values.image);
+            if (values.image) {
+                formData.append("image", values.image);
+            }
 
-            console.log("Sending FormData:", {
-                name: values.name,
-                description: values.description,
-                image: values.image ? values.image.name : "No image",
-            });
-
-            const response = await axios.post("http://localhost:5000/api/categories", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            console.log("Category Updated:", response.data);
-
-            resetForm();
-            setCategoryImage(null);
-            setPreviewImage(initialData?.image || null);
-            handleClose();
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-
+            const response = await axios.put(`http://localhost:5000/api/categories/${initialData._id}`, formData);
+            
+            console.log("Category updated:", response.data);
+            handleClose(); 
+            onSubmit(); 
         } catch (error) {
-            console.error("Error updating category:", error.response?.data || error.message);
+            console.error("Error updating category:", error);
         }
     };
 
@@ -92,8 +82,8 @@ const EditCategory = ({ initialData, onSubmit }) => {
         <div>
             <Tooltip title="Edit" arrow placement="top">
                 <Button variant="contained" onClick={handleClickOpen}>
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
                 </Button>
             </Tooltip>
 
@@ -109,27 +99,46 @@ const EditCategory = ({ initialData, onSubmit }) => {
                             image: null
                         }}
                         validationSchema={validationSchema}
-                        onSubmit={handleSubmit}
+                        onSubmit={handleUpdateCategory}
                     >
                         {({ setFieldValue, errors, touched }) => (
                             <Form className="space-y-2">
-                                <Field as={TextField} label="Category Name" name="name" variant="outlined" fullWidth required
-                                    error={touched.name && Boolean(errors.name)} helperText={touched.name && errors.name} />
+                                <Field 
+                                    as={TextField} 
+                                    label="Category Name" 
+                                    name="name" 
+                                    variant="outlined" 
+                                    fullWidth 
+                                    required
+                                    error={touched.name && Boolean(errors.name)} 
+                                    helperText={touched.name && errors.name} 
+                                />
 
-                                <Field as={TextField} label="Category Description" name="description" variant="outlined" fullWidth multiline rows={3}
-                                    error={touched.description && Boolean(errors.description)} helperText={touched.description && errors.description} />
+                                <Field 
+                                    as={TextField} 
+                                    label="Category Description" 
+                                    name="description" 
+                                    variant="outlined" 
+                                    fullWidth 
+                                    multiline 
+                                    rows={3}
+                                    error={touched.description && Boolean(errors.description)} 
+                                    helperText={touched.description && errors.description} 
+                                />
 
                                 <div className="bg-white rounded-lg p-3 shadow-sm">
-                                    <label className="block font-semibold mb-2 text-gray-700">Upload Category Image</label>
+                                    <label className="block font-semibold mb-2 text-gray-700">
+                                        Upload Category Image
+                                    </label>
                                     <Tooltip title="Upload Image" arrow placement="bottom">
                                         <Button component="label" variant="contained" startIcon={<CloudUploadIcon />} className="rounded-xl">
                                             Upload Image
                                             <VisuallyHiddenInput type="file" accept="image/*" onChange={(e) => handleImageChange(e, setFieldValue)} />
                                         </Button>
                                     </Tooltip>
-                                    {categoryImage && (
+                                    {previewImage && (
                                         <>
-                                            <Typography className="text-sm mt-2 text-gray-600">{categoryImage.name}</Typography>
+                                            <Typography className="text-sm mt-2 text-gray-600">{categoryImage?.name || "Current Image"}</Typography>
                                             <div className="mt-2">
                                                 <img src={previewImage} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
                                             </div>

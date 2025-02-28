@@ -11,21 +11,19 @@ const {
 
 const router = express.Router();
 
-// ✅ Multer Storage Setup
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "uploads/"); // Ensure "uploads" folder exists
+        cb(null, "uploads/"); 
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+        cb(null, Date.now() + path.extname(file.originalname)); 
     }
 });
 
 const upload = multer({ storage: storage });
 
-// ✅ Routes
 router.get("/categories", getCategories);
-router.get("/categories/:id", getCategoryById); // ✅ Get category by ID route added
+router.get("/categories/:id", getCategoryById); 
 router.post("/categories", upload.single("image"), createCategory);
 router.put("/categories/:id", upload.single("image"), updateCategory);
 router.delete("/categories/:id", deleteCategory);

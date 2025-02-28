@@ -6,12 +6,6 @@ import {
     TextField,
     DialogActions,
     Tooltip,
-    Box,
-    Typography,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
@@ -35,22 +29,13 @@ const VisuallyHiddenInput = styled("input")({
 const validationSchema = Yup.object({
     name: Yup.string().required("Subcategory Name is required!"),
     description: Yup.string().required("Subcategory Description is required!"),
-    categoryId: Yup.string().required("Category selection is required!"),
 });
 
-const EditCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
-    console.log(selectedSubCategory);
+const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
     
     const [open, setOpen] = useState(false);
     const [categoryImage, setCategoryImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(selectedSubCategory.image || null);
-    const [categories, setCategories] = useState([]);
-
-    useEffect(() => {
-        axios.get("http://localhost:5000/api/categories")
-            .then(response => setCategories(response.data))
-            .catch(error => console.error("Error fetching categories:", error));
-    }, []);
+    const [previewImage, setPreviewImage] = useState(selectedSubCategory?.image || null);
 
     const handleClickOpen = () => setOpen(true);
     const handleClose = () => {
@@ -67,29 +52,26 @@ const EditCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
         }
     };
 
-    const handleSubmit = async (values, { resetForm }) => {
+    const handleSubmit = async (values) => {
         try {
             const formData = new FormData();
             formData.append("name", values.name);
             formData.append("description", values.description);
-            formData.append("categoryId", values.categoryId);
             if (values.image) formData.append("image", values.image);
-
+    
             await axios.put(
-                `http://localhost:5000/api/categories/${values.categoryId}/subcategories/${subCategoryId}`,
+                `http://localhost:5000/api/categories/${categoryId}/subcategories/${subCategoryId}`,
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );
-
-            resetForm();
-            setCategoryImage(null);
+    
             handleClose();
-            setTimeout(() => window.location.reload(), 500);
+            window.location.reload(); 
         } catch (error) {
             console.error("Error updating subcategory:", error.response?.data || error.message);
         }
     };
-
+    
     return (
         <div>
             <Tooltip title="Edit" arrow placement="left">
@@ -105,32 +87,22 @@ const EditCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
                 <DialogContent className="bg-black/10">
                     <Formik
                         initialValues={{
-                            name: selectedSubCategory.name || "",
-                            description: selectedSubCategory.description || "",
+                            name: selectedSubCategory?.name || "",
+                            description: selectedSubCategory?.description || "",
                             image: null,
-                            categoryId: selectedSubCategory.categoryId || "",
                         }}
                         validationSchema={validationSchema}
                         onSubmit={handleSubmit}
                     >
-                        {({ setFieldValue, errors, touched }) => (
+                        {({ setFieldValue }) => (
                             <Form className="space-y-4">
-                                <FormControl fullWidth>
-                                    <InputLabel>Category</InputLabel>
-                                    <Field as={Select} name="categoryId" label="Category">
-                                        {categories.map(category => (
-                                            <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>
-                                        ))}
-                                    </Field>
-                                </FormControl>
-
                                 <Field as={TextField} label="Subcategory Name" name="name" variant="outlined" fullWidth required />
                                 <Field as={TextField} label="Subcategory Description" name="description" variant="outlined" fullWidth multiline rows={3} />
 
                                 <div className="bg-white rounded-lg p-3 shadow-sm">
                                     <label className="block font-semibold mb-2 text-gray-700">Upload Sub-Category Image</label>
                                     <Tooltip title="Upload Image" arrow placement="bottom">
-                                        <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}> 
+                                        <Button component="label" variant="contained" startIcon={<CloudUploadIcon />}>
                                             Upload Image
                                             <VisuallyHiddenInput type="file" accept="image/*" onChange={(e) => handleImageChange(e, setFieldValue)} />
                                         </Button>
@@ -151,4 +123,4 @@ const EditCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
     );
 };
 
-export default EditCategory;
+export default EditSubCategory;

@@ -23,7 +23,7 @@ const SigninForm = () => {
       const response = await axios.post("/api/auth/signin", { email, password });
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
-        console.log("✅ User signed in successfully!"); // <-- Console log here
+        console.log("✅ User signed in successfully!"); 
         navigate("/");
       }
     } catch (err) {
@@ -40,12 +40,10 @@ const SigninForm = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#1E2A47] to-[#162032] relative overflow-hidden p-4">
-      {/* Background Blurred Circles */}
       <div className="absolute w-40 h-40 md:w-64 md:h-64 bg-purple-500 rounded-full blur-[100px] opacity-70 top-10 left-10"></div>
       <div className="absolute w-40 h-40 md:w-64 md:h-64 bg-purple-500 rounded-full blur-[100px] opacity-70 bottom-10 right-10"></div>
 
       <div className="max-w-7xl w-full p-6 md:p-12 lg:gap-40 md:gap-2 justify-center flex flex-col md:flex-row items-center relative z-10">
-        {/* Left Side */}
         <div className="text-white max-w-md mb-6 md:mb-0 md:mr-8 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">Manage Your</h1>
           <h1 className="text-4xl md:text-5xl font-bold text-blue-400 leading-tight">Store with Ease</h1>
@@ -54,7 +52,6 @@ const SigninForm = () => {
           </p>
         </div>
 
-        {/* Right Side - Form */}
         <div className="bg-white py-24 px-10 md:p-14 rounded-2xl shadow-2xl justify-center w-full lg:max-w-lg h-auto backdrop-blur-lg bg-opacity-80 relative">
           <h2 className="text-4xl font-bold text-center mb-8">Sign In</h2>
           <Formik

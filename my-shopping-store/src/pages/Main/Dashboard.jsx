@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import axios from "axios";
 import { FaBars, FaHome } from "react-icons/fa";
 import { TbCategoryPlus } from "react-icons/tb";
@@ -170,9 +171,22 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                         className="p-2 flex items-center hover:bg-white/20 rounded cursor-pointer"
                         onClick={() => onSelectSubCategory(subcategory)}
                       >
-                        <img src={subcategory.image} alt={subcategory.name} className="w-5 h-5 rounded-full mr-2 object-cover" />
+                        <img
+                          src={subcategory.image}
+                          alt={subcategory.name}
+                          className="w-5 h-5 rounded-full mr-2 object-cover"
+                        />
                         <span className="truncate w-32">{subcategory.name}</span>
-                       <EditSubCategory selectedSubCategory={subcategory}/>
+
+                        {/* Edit Subcategory Component */}
+                        <EditSubCategory
+                          selectedSubCategory={subcategory}
+                          categoryname={category.name}
+                          subCategoryId={subcategory._id}   // Ensure subcategory ID is passed
+                          categoryId={category._id}         // Ensure category ID is passed if required
+                        />
+
+                        {/* Delete Button */}
                         <Tooltip title="Delete" arrow placement="right">
                           <button
                             className="ml-auto flex items-center px-[5px] py-[5px] bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
@@ -188,6 +202,7 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                     ))}
                   </ul>
                 )}
+
               </li>
             ))}
           </ul>
@@ -197,6 +212,12 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
   );
 };
 
+Sidebar.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+  onSelectCategory: PropTypes.func.isRequired,
+  onSelectSubCategory: PropTypes.func.isRequired,
+};
+
 const Layout = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const storedState = localStorage.getItem("sidebarState");
@@ -204,7 +225,6 @@ const Layout = () => {
   });
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -235,29 +255,6 @@ const Layout = () => {
       } catch (error) {
         console.error("Error deleting category:", error);
       }
-    }
-  };
-
-  const handleEditCategory = (category) => {
-    setSelectedCategory(category);
-    setIsEditing(true);
-  };
-
-  const handleUpdateCategory = async (updatedData) => {
-    try {
-      const formData = new FormData();
-      formData.append("name", updatedData.name);
-      formData.append("description", updatedData.description);
-      if (updatedData.image) {
-        formData.append("image", updatedData.image);
-      }
-
-      await axios.put(`http://localhost:5000/api/categories/${selectedCategory._id}`, formData);
-      setSelectedCategory(null);
-      setIsEditing(false);
-      window.location.reload();
-    } catch (error) {
-      console.error("Error updating category:", error);
     }
   };
 
@@ -311,9 +308,11 @@ const Layout = () => {
             <SubCategory />
           </div>
         </div>
-        {selectedCategory && !isEditing && (
+        {selectedCategory &&  (
           <div>
-            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">Category</h1>
+            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+              Category
+            </h1>
             <div className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
               <div className="flex items-center mb-4">
                 <img
@@ -329,10 +328,17 @@ const Layout = () => {
               <p className="ml-16 text-xl text-gray-700 font-semibold">
                 {selectedCategory.description}
               </p>
+
               <div className="flex justify-end gap-4 mt-6">
-                <EditCategory onClick={() => handleEditCategory(selectedCategory)} />
+                {/* 🛠️ Edit Category Component with Correct Data */}
+                {selectedCategory._id && (
+                  <EditCategory 
+                    initialData={selectedCategory} 
+                    onSubmit={() => window.location.reload()} 
+                  />
+                )}
 
-
+                {/* 🗑️ Delete Button */}
                 <Tooltip title="Delete" arrow placement="top">
                   <button
                     className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
@@ -343,20 +349,6 @@ const Layout = () => {
                   </button>
                 </Tooltip>
               </div>
-            </div>
-          </div>
-        )}
-
-        {isEditing && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
-              <CustomForm initialData={selectedCategory} onSubmit={handleUpdateCategory} />
-              <button
-                className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </button>
             </div>
           </div>
         )}

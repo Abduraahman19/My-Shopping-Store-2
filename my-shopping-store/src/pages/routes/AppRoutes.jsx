@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "../Main/Dashboard";
-import SigninPage from "../Auth/signinPage";  // ✅ Correct Path
+import SigninPage from "../Auth/signinPage"; 
 
 const AppRoutes = () => {
   return (

@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const Category = require("../models/categoryModel");
 
-// ✅ Get all subcategories of a category
 exports.getSubCategories = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -20,7 +19,6 @@ exports.getSubCategories = async (req, res) => {
   }
 };
 
-// ✅ Get a single subcategory by ID (returning all fields)
 exports.getSubCategoryById = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
@@ -43,7 +41,6 @@ exports.getSubCategoryById = async (req, res) => {
   }
 };
 
-// ✅ Add a new subcategory to a category
 exports.createSubCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -67,7 +64,6 @@ exports.createSubCategory = async (req, res) => {
   }
 };
 
-// ✅ Update subcategory (now updates all fields including image)
 exports.updateSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
@@ -80,13 +76,11 @@ exports.updateSubCategory = async (req, res) => {
     const subcategory = category.subcategories.id(subCategoryId);
     if (!subcategory) return res.status(404).json({ error: "Subcategory not found" });
 
-    // ✅ Delete old image if a new one is uploaded
     if (newImage && subcategory.image) {
       const oldImagePath = path.join(__dirname, "..", "uploads", subcategory.image);
       if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
     }
 
-    // ✅ Update all fields
     subcategory.name = name || subcategory.name;
     subcategory.description = description || subcategory.description;
     if (newImage) subcategory.image = newImage;
@@ -98,7 +92,6 @@ exports.updateSubCategory = async (req, res) => {
   }
 };
 
-// ✅ Delete subcategory (including image)
 exports.deleteSubCategory = async (req, res) => {
   try {
     const { categoryId, subCategoryId } = req.params;
@@ -109,7 +102,6 @@ exports.deleteSubCategory = async (req, res) => {
     const subcategory = category.subcategories.id(subCategoryId);
     if (!subcategory) return res.status(404).json({ error: "Subcategory not found" });
 
-    // ✅ Delete image from "uploads" folder
     if (subcategory.image) {
       const imagePath = path.join(__dirname, "..", "uploads", subcategory.image);
       if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
