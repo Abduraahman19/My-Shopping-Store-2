@@ -10,8 +10,9 @@ import { useNavigate } from "react-router-dom";
 import Category from "../../components/Category";
 import SubCategory from "../../components/SubCategory";
 import { Trash } from "lucide-react";
-import EditCategory from "../../components/editCategory"; // Corrected line
-import EditSubCategory from "../../components/editSubcategory"; // Corrected line
+import EditCategory from "../../components/editCategory"; 
+import EditSubCategory from "../../components/editSubcategory"; 
+import Search from "../../components/Search"; 
 
 const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
@@ -178,15 +179,13 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                         />
                         <span className="truncate w-32">{subcategory.name}</span>
 
-                        {/* Edit Subcategory Component */}
                         <EditSubCategory
                           selectedSubCategory={subcategory}
                           categoryname={category.name}
-                          subCategoryId={subcategory._id}   // Ensure subcategory ID is passed
-                          categoryId={category._id}         // Ensure category ID is passed if required
+                          subCategoryId={subcategory._id}   
+                          categoryId={category._id}         
                         />
 
-                        {/* Delete Button */}
                         <Tooltip title="Delete" arrow placement="right">
                           <button
                             className="ml-auto flex items-center px-[5px] py-[5px] bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
@@ -271,6 +270,7 @@ const Layout = () => {
               My Shopping Store
             </h2>
           </div>
+          <Search/>  
           <Tooltip title="Logout" arrow placement="bottom">
             <div className="bg-red-600 flex items-center px-3 py-2 rounded-lg hover:bg-red-700 cursor-pointer" onClick={handleLogout}>
               <FiLogOut className="text-xl" />
@@ -330,7 +330,6 @@ const Layout = () => {
               </p>
 
               <div className="flex justify-end gap-4 mt-6">
-                {/* 🛠️ Edit Category Component with Correct Data */}
                 {selectedCategory._id && (
                   <EditCategory 
                     initialData={selectedCategory} 
@@ -338,7 +337,6 @@ const Layout = () => {
                   />
                 )}
 
-                {/* 🗑️ Delete Button */}
                 <Tooltip title="Delete" arrow placement="top">
                   <button
                     className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
