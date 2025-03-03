@@ -10,9 +10,9 @@ import { useNavigate } from "react-router-dom";
 import Category from "../../components/Category";
 import SubCategory from "../../components/SubCategory";
 import { Trash } from "lucide-react";
-import EditCategory from "../../components/editCategory"; 
-import EditSubCategory from "../../components/editSubcategory"; 
-import Search from "../../components/Search"; 
+import EditCategory from "../../components/editCategory";
+import EditSubCategory from "../../components/editSubcategory";
+import Search from "../../components/Search";
 
 const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
@@ -182,8 +182,8 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                         <EditSubCategory
                           selectedSubCategory={subcategory}
                           categoryname={category.name}
-                          subCategoryId={subcategory._id}   
-                          categoryId={category._id}         
+                          subCategoryId={subcategory._id}
+                          categoryId={category._id}
                         />
 
                         <Tooltip title="Delete" arrow placement="right">
@@ -224,6 +224,7 @@ const Layout = () => {
   });
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [selectedSubCategory2, setSelectedSubCategory2] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -238,12 +239,42 @@ const Layout = () => {
   const handleSelectCategory = (category) => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
+    setSelectedSubCategory2(null); // Search se aayi subcategories ko reset karo
   };
 
   const handleSelectSubCategory = (subcategory) => {
     setSelectedSubCategory(subcategory);
     setSelectedCategory(null);
+    setSelectedSubCategory2(null); // Search se aayi subcategories ko reset karo
   };
+
+  const handleSearchCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setSelectedSubCategory(null);
+
+    // Ensure that selected category's subcategories are updated
+    if (category.subcategories) {
+      setSelectedSubCategory2(category.subcategories); // Yeh subcategories show karega
+    } else {
+      setSelectedSubCategory2([]); // Agar koi subcategory nahi hai toh empty array
+    }
+
+    // Sidebar wali categories reset
+    setSidebarCategory(null);
+    setSidebarSubCategory(null);
+  };
+
+  const handleSearchSubCategorySelect = (subcategory) => {
+    setSelectedSubCategory(subcategory);
+    setSelectedCategory(null);
+    setSelectedSubCategory2(null); // Extra subcategories ko reset karna zaroori hai
+
+    // Sidebar wali categories reset
+    setSidebarCategory(null);
+    setSidebarSubCategory(null);
+  };
+
+
 
   const handleDeleteCategory = async (categoryId) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
@@ -270,7 +301,13 @@ const Layout = () => {
               My Shopping Store
             </h2>
           </div>
-          <Search/>  
+          <div className="fixed justify-between right-32 flex">
+            <Search
+              onSelectCategory={handleSearchCategorySelect}
+              onSelectSubCategory2={handleSearchSubCategorySelect}
+            />
+
+          </div>
           <Tooltip title="Logout" arrow placement="bottom">
             <div className="bg-red-600 flex items-center px-3 py-2 rounded-lg hover:bg-red-700 cursor-pointer" onClick={handleLogout}>
               <FiLogOut className="text-xl" />
@@ -288,15 +325,17 @@ const Layout = () => {
       />
 
       <main className={`transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-64"} mt-20 text-black flex flex-col items-center md:items-start custom-scrollbar`}>
+
         <div className="p-6 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-700 drop-shadow-lg">
             Welcome to
-            <span className="text-cyan-600 ml-2">My Shopping Store</span>
+            <span className="text-cyan-600 ml-2"> My Shopping Store</span>
           </h1>
           <p className="mt-3 text-lg text-gray-700 font-semibold">
             Manage your categories efficiently!
           </p>
         </div>
+
         <div className="md:flex space-y-7 gap-6 p-6">
           <div className="w-full md:mt-[24px] max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
                   transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
@@ -308,7 +347,7 @@ const Layout = () => {
             <SubCategory />
           </div>
         </div>
-        {selectedCategory &&  (
+        {selectedCategory && (
           <div>
             <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
               Category
@@ -331,9 +370,9 @@ const Layout = () => {
 
               <div className="flex justify-end gap-4 mt-6">
                 {selectedCategory._id && (
-                  <EditCategory 
-                    initialData={selectedCategory} 
-                    onSubmit={() => window.location.reload()} 
+                  <EditCategory
+                    initialData={selectedCategory}
+                    onSubmit={() => window.location.reload()}
                   />
                 )}
 
@@ -372,6 +411,35 @@ const Layout = () => {
             </div>
           </div>
         )}
+        {selectedSubCategory2 && selectedSubCategory2.length > 0 && (
+          <div>
+            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+              Sub-Categories
+            </h1>
+            {selectedSubCategory2.map((sub) => (
+              <div
+                key={sub._id}
+                className="max-w-xl bg-cyan-800/20 p-6 mb-10 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8"
+              >
+                <div className="flex items-center mb-4">
+                  <img
+                    src={sub.image}
+                    alt={sub.name}
+                    className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                  />
+                  <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
+                    {sub.name}
+                  </h1>
+                </div>
+
+                <p className="ml-16 text-xl text-gray-700 font-semibold">
+                  {sub.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
       </main>
       <style>
         {`
