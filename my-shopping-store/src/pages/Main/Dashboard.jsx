@@ -100,17 +100,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
     });
   };
 
-  const handleDeleteSubCategory = async (categoryId, subCategoryId) => {
-    if (window.confirm("Are you sure you want to delete this subcategory?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/categories/${categoryId}/subcategories/${subCategoryId}`);
-        window.location.reload();
-      } catch (error) {
-        console.error("Error deleting subcategory:", error);
-      }
-    }
-  };
-
   return (
     <div className="relative">
       <div
@@ -206,6 +195,8 @@ const Layout = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [selectedSubCategory2, setSelectedSubCategory2] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -220,27 +211,25 @@ const Layout = () => {
   const handleSelectCategory = (category) => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
-    setSelectedSubCategory2(null); // Search se aayi subcategories ko reset karo
+    setSelectedSubCategory2(null); 
   };
 
   const handleSelectSubCategory = (subcategory) => {
     setSelectedSubCategory(subcategory);
     setSelectedCategory(null);
-    setSelectedSubCategory2(null); // Search se aayi subcategories ko reset karo
+    setSelectedSubCategory2(null); 
   };
 
   const handleSearchCategorySelect = (category) => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
 
-    // Ensure that selected category's subcategories are updated
     if (category.subcategories) {
-      setSelectedSubCategory2(category.subcategories); // Yeh subcategories show karega
+      setSelectedSubCategory2(category.subcategories); 
     } else {
-      setSelectedSubCategory2([]); // Agar koi subcategory nahi hai toh empty array
+      setSelectedSubCategory2([]); 
     }
 
-    // Sidebar wali categories reset
     setSidebarCategory(null);
     setSidebarSubCategory(null);
   };
@@ -248,9 +237,8 @@ const Layout = () => {
   const handleSearchSubCategorySelect = (subcategory) => {
     setSelectedSubCategory(subcategory);
     setSelectedCategory(null);
-    setSelectedSubCategory2(null); // Extra subcategories ko reset karna zaroori hai
+    setSelectedSubCategory2(null); 
 
-    // Sidebar wali categories reset
     setSidebarCategory(null);
     setSidebarSubCategory(null);
   };
@@ -268,7 +256,6 @@ const Layout = () => {
   };
 
   const handleEditSubCategory = (subcategory) => {
-    // Open the EditSubCategory component with the selected subcategory data
     console.log("Edit Subcategory", subcategory);
   };
 
