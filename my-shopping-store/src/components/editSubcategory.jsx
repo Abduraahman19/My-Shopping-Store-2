@@ -78,9 +78,9 @@ const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => 
     
     return (
         <div>
-            <Tooltip title="Edit" arrow placement="left">
-                <button onClick={handleClickOpen} className="ml-auto flex items-center px-[5px] py-[5px] bg-blue-500 text-white rounded-full shadow-md hover:bg-blue-600 transition">
-                    <Pencil className="w-4 h-4" />
+            <Tooltip title="Edit" arrow placement="top">
+                <button onClick={handleClickOpen} className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition">
+                    <Pencil className="w-5 h-5 mr-2" /> Edit
                 </button>
             </Tooltip>
 
@@ -116,7 +116,7 @@ const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => 
 
                                 <DialogActions>
                                     <Button onClick={handleClose} color="error" variant="contained">Cancel</Button>
-                                    <Button type="submit" color="primary" variant="contained">Save Changes</Button>
+                                    <Button  type="submit" color="primary" variant="contained">Save Changes</Button>
                                 </DialogActions>
                             </Form>
                         )}

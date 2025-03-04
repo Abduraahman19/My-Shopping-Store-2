@@ -178,25 +178,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                           className="w-5 h-5 rounded-full mr-2 object-cover"
                         />
                         <span className="truncate w-32">{subcategory.name}</span>
-
-                        <EditSubCategory
-                          selectedSubCategory={subcategory}
-                          categoryname={category.name}
-                          subCategoryId={subcategory._id}
-                          categoryId={category._id}
-                        />
-
-                        <Tooltip title="Delete" arrow placement="right">
-                          <button
-                            className="ml-auto flex items-center px-[5px] py-[5px] bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteSubCategory(category._id, subcategory._id);
-                            }}
-                          >
-                            <Trash className="w-4 h-4" />
-                          </button>
-                        </Tooltip>
                       </li>
                     ))}
                   </ul>
@@ -274,8 +255,6 @@ const Layout = () => {
     setSidebarSubCategory(null);
   };
 
-
-
   const handleDeleteCategory = async (categoryId) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
@@ -284,6 +263,22 @@ const Layout = () => {
         window.location.reload();
       } catch (error) {
         console.error("Error deleting category:", error);
+      }
+    }
+  };
+
+  const handleEditSubCategory = (subcategory) => {
+    // Open the EditSubCategory component with the selected subcategory data
+    console.log("Edit Subcategory", subcategory);
+  };
+
+  const handleDeleteSubCategory = async (categoryId, subCategoryId) => {
+    if (window.confirm("Are you sure you want to delete this subcategory?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/categories/${categoryId}/subcategories/${subCategoryId}`);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting subcategory:", error);
       }
     }
   };
@@ -306,7 +301,6 @@ const Layout = () => {
               onSelectCategory={handleSearchCategorySelect}
               onSelectSubCategory2={handleSearchSubCategorySelect}
             />
-
           </div>
           <Tooltip title="Logout" arrow placement="bottom">
             <div className="bg-red-600 flex items-center px-3 py-2 rounded-lg hover:bg-red-700 cursor-pointer" onClick={handleLogout}>
@@ -325,7 +319,6 @@ const Layout = () => {
       />
 
       <main className={`transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-64"} mt-20 text-black flex flex-col items-center md:items-start custom-scrollbar`}>
-
         <div className="p-6 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-700 drop-shadow-lg">
             Welcome to
@@ -408,38 +401,78 @@ const Layout = () => {
               <p className="ml-16 text-xl text-gray-700 font-semibold">
                 {selectedSubCategory.description}
               </p>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <EditSubCategory
+                  selectedSubCategory={selectedSubCategory}
+                  categoryId={selectedCategory?._id}
+                  subCategoryId={selectedSubCategory._id}
+                  onSubmit={() => window.location.reload()}
+                />
+                <Tooltip title="Delete" arrow placement="top">
+                  <button
+                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                    onClick={async () => {
+                      await handleDeleteSubCategory(selectedCategory?._id, selectedSubCategory._id);
+                      setSelectedSubCategory(null);
+                    }}
+                  >
+                    <Trash className="w-5 h-5 mr-2" />
+                    Delete
+                  </button>
+                </Tooltip>
+              </div>
             </div>
           </div>
         )}
+
         {selectedSubCategory2 && selectedSubCategory2.length > 0 && (
           <div>
             <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
               Sub-Categories
             </h1>
-            {selectedSubCategory2.map((sub) => (
-              <div
-                key={sub._id}
-                className="max-w-xl bg-cyan-800/20 p-6 mb-10 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8"
-              >
-                <div className="flex items-center mb-4">
-                  <img
-                    src={sub.image}
-                    alt={sub.name}
-                    className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
-                  />
-                  <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
-                    {sub.name}
-                  </h1>
-                </div>
+            <div className="grid lg:grid-cols-2 md:grid-cols-1">
+              {selectedSubCategory2.map((sub) => (
+                <div
+                  key={sub._id}
+                  className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8"
+                >
+                  <div className="flex items-center mb-4">
+                    <img
+                      src={sub.image}
+                      alt={sub.name}
+                      className="w-[50px] h-[50px] rounded-full mr-4 object-cover cursor-pointer"
+                    />
+                    <h1 className="text-2xl font-bold text-neutral-700 drop-shadow-lg">
+                      {sub.name}
+                    </h1>
+                  </div>
 
-                <p className="ml-16 text-xl text-gray-700 font-semibold">
-                  {sub.description}
-                </p>
-              </div>
-            ))}
+                  <p className="ml-16 text-lg text-gray-700 font-semibold">
+                    {sub.description}
+                  </p>
+                  <div className="flex justify-end gap-4 mb-[-10px] mt-6">
+                    <EditSubCategory
+                      selectedSubCategory={sub}
+                      categoryId={selectedCategory?._id}
+                      subCategoryId={sub._id}
+                      onSubmit={() => window.location.reload()}
+                    />
+                    <Tooltip title="Delete" arrow placement="top">
+                      <button
+                        className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                        onClick={() => handleDeleteSubCategory(selectedCategory?._id, sub._id)}
+                      >
+                        <Trash className="w-5 h-5 mr-2" />
+                        Delete
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-
       </main>
       <style>
         {`
