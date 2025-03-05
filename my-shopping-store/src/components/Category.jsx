@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Button,
     Dialog,
@@ -36,6 +36,20 @@ const Category = () => {
     const [categoryImage, setCategoryImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
 
+    // 🔥 Shortcut Key Function
+    const handleShortcut = useCallback((event) => {
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "c") {
+            event.preventDefault();
+            setOpen(true);
+        }
+    }, []);
+
+    // 🔥 Add Shortcut Listener
+    useEffect(() => {
+        window.addEventListener("keydown", handleShortcut);
+        return () => window.removeEventListener("keydown", handleShortcut);
+    }, [handleShortcut]);
+
     const handleClickOpen = () => setOpen(true);
     const handleClose = () => {
         setOpen(false);
@@ -66,9 +80,7 @@ const Category = () => {
             });
 
             const response = await axios.post("http://localhost:5000/api/categories", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+                headers: { "Content-Type": "multipart/form-data" },
             });
 
             console.log("Category Added:", response.data);
@@ -93,7 +105,7 @@ const Category = () => {
                 <div className="mb-4 font-bold text-2xl text-neutral-700 text-center">
                     Add a New Category
                 </div>
-                <Tooltip title="+ Add Category" arrow placement="bottom">
+                <Tooltip title="+ Add Category (Ctrl + Shift + C)" arrow placement="bottom">
                     <Button variant="contained" fullWidth className="text-white font-bold px-6 py-3 rounded-lg" onClick={handleClickOpen}>
                         + Add Category
                     </Button>

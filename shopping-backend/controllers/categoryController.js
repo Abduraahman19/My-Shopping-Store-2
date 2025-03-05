@@ -6,8 +6,16 @@ exports.getCategories = async (req, res) => {
     try {
         const categories = await Category.find();
         const categoriesWithImages = categories.map(category => ({
-            ...category._doc,
-            image: category.image ? `${req.protocol}://${req.get("host")}/uploads/${category.image}` : null
+            _id: category._id,
+            name: category.name,
+            description: category.description,
+            image: category.image ? `${req.protocol}://${req.get("host")}/uploads/${category.image}` : null,
+            subcategories: category.subcategories.map(subcategory => ({
+                _id: subcategory._id,
+                name: subcategory.name,
+                description: subcategory.description,
+                image: subcategory.image ? `${req.protocol}://${req.get("host")}/uploads/${subcategory.image}` : null
+            }))
         }));
 
         res.json(categoriesWithImages);

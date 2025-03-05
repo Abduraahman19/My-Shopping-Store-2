@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -48,6 +48,18 @@ const SubCategory = () => {
             .catch(error => console.error("Error fetching categories:", error));
     }, []);
 
+    const handleShortcut = useCallback((event) => {
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "a") {
+            event.preventDefault();
+            setOpen(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener("keydown", handleShortcut);
+        return () => window.removeEventListener("keydown", handleShortcut);
+    }, [handleShortcut]);
+
     const handleClickOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
@@ -57,7 +69,7 @@ const SubCategory = () => {
                 <div className="mb-4 font-bold text-2xl text-neutral-700 text-center">
                     Add a New Sub-Category
                 </div>
-                <Tooltip title="+ Add Sub-Category" arrow placement="bottom">
+                <Tooltip title="+ Add Sub-Category (Ctrl + Shift + S)" arrow placement="bottom">
                     <Button variant="contained" fullWidth onClick={handleClickOpen}>
                         + Add Sub-Category
                     </Button>
@@ -137,22 +149,22 @@ const SubCategory = () => {
                                         Upload Sub-Category Image
                                     </label>
                                     <Tooltip title="Upload Image" arrow placement="bottom">
-                                    <Button
-                                        component="label"
-                                        variant="contained"
-                                        startIcon={<CloudUploadIcon />}
-                                    >
-                                        Upload Image
-                                        <VisuallyHiddenInput
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(event) => {
-                                                const file = event.target.files[0];
-                                                setFieldValue("subCategoryImage", file);
-                                                setPreviewImage(URL.createObjectURL(file));
-                                            }}
-                                        />
-                                    </Button>
+                                        <Button
+                                            component="label"
+                                            variant="contained"
+                                            startIcon={<CloudUploadIcon />}
+                                        >
+                                            Upload Image
+                                            <VisuallyHiddenInput
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(event) => {
+                                                    const file = event.target.files[0];
+                                                    setFieldValue("subCategoryImage", file);
+                                                    setPreviewImage(URL.createObjectURL(file));
+                                                }}
+                                            />
+                                        </Button>
                                     </Tooltip>
                                     {previewImage && (
                                         <div className="mt-2">
@@ -162,16 +174,8 @@ const SubCategory = () => {
                                 </div>
 
                                 <DialogActions>
-                                <Tooltip title="Cancel" arrow placement="bottom">
-                                    <Button onClick={handleClose} color="error" variant="contained">
-                                        Cancel
-                                    </Button>
-                                    </Tooltip>
-                                    <Tooltip title="Save Sub-Category" arrow placement="bottom">
-                                    <Button type="submit" color="primary" variant="contained">
-                                        Save Sub-Category
-                                    </Button>
-                                    </Tooltip>
+                                    <Button onClick={handleClose} color="error" variant="contained">Cancel</Button>
+                                    <Button type="submit" color="primary" variant="contained">Save Sub-Category</Button>
                                 </DialogActions>
                             </Form>
                         )}

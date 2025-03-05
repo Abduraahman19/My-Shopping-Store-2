@@ -33,7 +33,7 @@ const validationSchema = Yup.object({
 });
 
 const EditCategory = ({ initialData, onSubmit }) => {
-        console.log("Initial Data in EditCategory:", initialData);  
+        // console.log("Initial Data in EditCategory:", initialData);  
     const [open, setOpen] = useState(false);
     const [categoryImage, setCategoryImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(initialData?.image || null);

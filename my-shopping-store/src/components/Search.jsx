@@ -23,17 +23,31 @@ const SearchBar = ({ onSelectCategory, onSelectSubCategory2 }) => {
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
+  // Shortcut Key (Ctrl + Shift + S) to Open Search
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        setOpen(true); // Open search modal
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleSelectCategory = (category) => {
     setSearchTerm("");
     setOpen(false);
     onSelectCategory(category); // Set selected category
-  
+
     // Fetch subcategories for the selected category
     axios
       .get(`http://localhost:5000/api/categories/${category._id}/subcategories`)
       .then((response) => {
         if (Array.isArray(response.data)) {
           onSelectSubCategory2(response.data); // Update subcategories
+          console.log("response.data", response.data);
         } else {
           onSelectSubCategory2([]); // If response format is wrong, set an empty array
         }
@@ -43,16 +57,15 @@ const SearchBar = ({ onSelectCategory, onSelectSubCategory2 }) => {
         onSelectSubCategory2([]); // Clear subcategories if error occurs
       });
   };
-  
 
   const filteredCategories =
     searchTerm.trim() === ""
       ? []
       : categories.filter(
-          (category) =>
-            typeof category.name === "string" &&
-            category.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        (category) =>
+          typeof category.name === "string" &&
+          category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
   return (
     <>

@@ -32,9 +32,9 @@ const validationSchema = Yup.object({
 });
 
 const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
-    console.log(subCategoryId);
-    console.log(categoryId);
-    console.log(selectedSubCategory);
+    // console.log(subCategoryId);
+    // console.log(categoryId);
+    // console.log(selectedSubCategory);
     
     
     const [open, setOpen] = useState(false);
