@@ -14,6 +14,7 @@ import EditCategory from "../../components/editCategory";
 import EditSubCategory from "../../components/editSubcategory";
 import Search from "../../components/Search";
 import Shortcut from "../../components/Shortcut";
+import { AiOutlineProduct } from "react-icons/ai";
 
 const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
@@ -28,9 +29,8 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
     axios
       .get("http://localhost:5000/api/categories")
       .then((response) => {
-        // console.log("🚀 ~ useEffect ~ response:", response.data)
-        sessionStorage.setItem("categories", JSON.stringify(response.data))
-        return setCategories(response.data)
+        sessionStorage.setItem("categories", JSON.stringify(response.data));
+        setCategories(response.data);
       })
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
@@ -109,19 +109,20 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
     <div className="relative">
       <div
         className={`mt-[78px] mb-5 ml-2 rounded-xl bg-cyan-600 text-neutral-100 ${isCollapsed ? "w-16 opacity-50" : "w-64 opacity-100"
-          } transition-all duration-300 flex flex-col h-[calc(100vh-93px)] p-4 fixed top-0 left-0 overflow-y-auto custom-scrollbar`}
+          } transition-all duration-300 shadow-[0_2px_10px_0px_rgba(0,0,0,2)] flex flex-col h-[calc(100vh-93px)] p-4 fixed top-0 left-0 overflow-y-auto custom-scrollbar`}
       >
-
+        {/* Home */}
         <Tooltip title="Home" arrow placement="right">
           <div
             className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
             onClick={() => window.location.reload()}
           >
             <FaHome className="text-3xl" />
-            <h1 className="text-xl font-bold font-serif">Home</h1>
+            {!isCollapsed && <h1 className="text-xl font-bold font-serif">Home</h1>}
           </div>
         </Tooltip>
 
+        {/* Category */}
         <Tooltip title="Category" arrow placement="right">
           <div
             className="flex items-center space-x-3 p-2 hover:bg-white/20 rounded cursor-pointer"
@@ -137,29 +138,33 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
               ))}
           </div>
         </Tooltip>
-
-        {openDropdowns["main"] && (
+        {/* Category List */}
+        {openDropdowns["main"] && !isCollapsed && (
           <ul className="ml-2 mt-2 space-y-2">
             {categories.map((category) => (
               <li key={category._id}>
                 <div className="p-2 flex items-center hover:bg-white/20 rounded cursor-pointer">
+                  {/* Image Click will NOT toggle dropdown */}
                   <img
                     src={category.image}
                     alt={category.name}
                     className="w-6 h-6 rounded-full mr-2 object-cover cursor-pointer"
                     onClick={() => onSelectCategory(category)}
                   />
-                  <span className="truncate w-32" onClick={() => toggleDropdown(category._id)}>
-                    {category.name}
-                  </span>
-                  {openDropdowns[category._id] ? (
-                    <MdKeyboardArrowUp onClick={() => toggleDropdown(category._id)} />
-                  ) : (
-                    <MdKeyboardArrowDown onClick={() => toggleDropdown(category._id)} />
-                  )}
+
+                  {/* Text & Arrow Click will toggle dropdown */}
+                  <div
+                    className="flex items-center w-full cursor-pointer"
+                    onClick={() => toggleDropdown(category._id)}
+                  >
+                    {!isCollapsed && <span className="truncate w-32">{category.name}</span>}
+                    {!isCollapsed &&
+                      (openDropdowns[category._id] ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />)}
+                  </div>
                 </div>
 
-                {openDropdowns[category._id] && subcategories[category._id] && (
+                {/* Subcategories */}
+                {openDropdowns[category._id] && subcategories[category._id] && !isCollapsed && (
                   <ul className="ml-4 mt-2 space-y-1">
                     {subcategories[category._id].map((subcategory) => (
                       <li
@@ -177,12 +182,20 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                     ))}
                   </ul>
                 )}
-
               </li>
+
             ))}
           </ul>
         )}
-      </div>
+        <Tooltip title="Products" arrow placement="right">
+          <div
+            className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
+          >
+            <AiOutlineProduct className="text-3xl" />
+            {!isCollapsed && <h1 className="text-xl font-bold font-serif">Products</h1>}
+          </div>
+        </Tooltip>
+        </div>
     </div>
   );
 };
@@ -203,7 +216,6 @@ const Layout = () => {
   const [selectedSubCategory2, setSelectedSubCategory2] = useState(null);
   const navigate = useNavigate();
 
-  // Redirect unauthenticated users
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -213,7 +225,7 @@ const Layout = () => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.ctrlKey && event.key === "l") { // Ctrl + L shortcut
+      if (event.ctrlKey && event.key === "l") {
         event.preventDefault();
         localStorage.removeItem("token");
         navigate("/signin");
@@ -305,7 +317,7 @@ const Layout = () => {
         }
       }
     }
-    return null; // Return null if ID not found
+    return null;
   }
 
   const handleDeleteSubCategory = async (categoryId, subCategoryId) => {
@@ -329,7 +341,7 @@ const Layout = () => {
   };
 
   return (
-    <div className="h-screen w-screen bg-neutral-100 fixed overflow-y-auto">
+    <div className="h-screen w-screen bg-[#F5F7FA] fixed overflow-y-auto">
       <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-3 left-0 right-0 mx-2 z-50">
         <div className="flex items-center w-full justify-between">
           <div className="gap-4 flex items-center">
