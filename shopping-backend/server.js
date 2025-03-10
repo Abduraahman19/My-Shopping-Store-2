@@ -5,6 +5,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const subCategoryRoutes = require("./routes/subCategoryRoutes");
+const productRoutes = require("./routes/productRoutes"); // ✅ Products API route added
 const path = require("path");
 
 dotenv.config();
@@ -14,17 +15,22 @@ const app = express();
 app.use(cors()); 
 app.use(express.json()); 
 
+// Static folder for uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// Database Connection
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ Database Connected"))
   .catch((err) => console.log("❌ Database Connection Error:", err));
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", subCategoryRoutes);
+app.use("/api/products", productRoutes); // ✅ Added Products API
 
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

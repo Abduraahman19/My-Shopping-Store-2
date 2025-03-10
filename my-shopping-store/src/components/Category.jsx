@@ -105,7 +105,7 @@ const Category = () => {
                 <div className="mb-4 font-bold text-2xl text-neutral-700 text-center">
                     Add a New Category
                 </div>
-                <Tooltip title="+ Add Category (Ctrl + Shift + C)" arrow placement="bottom">
+                <Tooltip title="+ Add Category" arrow placement="bottom">
                     <Button variant="contained" fullWidth className="text-white font-bold px-6 py-3 rounded-lg" onClick={handleClickOpen}>
                         + Add Category
                     </Button>

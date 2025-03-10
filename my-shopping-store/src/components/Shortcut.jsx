@@ -28,13 +28,13 @@ const Shortcut = () => {
                 fullWidth
                 className="rounded-lg"
             >
-                <div className="bg-cyan-600/70 text-white py-3 px-5 flex justify-between items-center">
+                <div className="bg-cyan-600/70 text-white pl-5 flex justify-between items-center">
                     <h2 className="text-2xl text font-bold">Keyboard Shortcuts</h2>
-                    <AiOutlineClose
-                        className="text-2xl cursor-pointer hover:text-red-600 transition"
-                        onClick={() => setOpen(false)}
-                    />
+                    <div onClick={() => setOpen(false)} className="hover:bg-red-600 cursor-pointer transition duration-300 h-12 w-14 flex items-center justify-center ">
+                    <AiOutlineClose className="text-2xl "/>
+                    </div>
                 </div>
+
 
                 <DialogContent className="bg-gray-50 p-5 text-gray-800">
                     <div className="space-y-3">
@@ -50,18 +50,23 @@ const Shortcut = () => {
                         <p className="text-lg">
                             <strong className="text-cyan-600 font-bold text-xl">Ctrl + Shift + S</strong>  <span className="font-semibold">- Open SearchBar</span>
                         </p>
+                        <p className="text-lg">
+                            <strong className="text-cyan-600 font-bold text-xl">Alt + Shift + P</strong>  <span className="font-semibold">- Open Add Products Form</span>
+                        </p>
                     </div>
                 </DialogContent>
 
                 <DialogActions className="bg-gray-100 px-5 py-3">
-                    <Button
-                        onClick={() => setOpen(false)}
-                        color="error"
-                        variant="contained"
-                        className="px-4 py-2 text-base font-semibold shadow-md hover:bg-red-600 transition"
-                    >
-                        Close
-                    </Button>
+                    <Tooltip title="Close" arrow placement="top">
+                        <Button
+                            onClick={() => setOpen(false)}
+                            color="error"
+                            variant="contained"
+                            className="px-4 py-2 text-base font-semibold shadow-md hover:bg-red-600 transition"
+                        >
+                            Close
+                        </Button>
+                    </Tooltip>
                 </DialogActions>
             </Dialog>
         </div>

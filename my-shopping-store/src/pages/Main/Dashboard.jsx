@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import axios from "axios";
 import { FaBars, FaHome } from "react-icons/fa";
 import { TbCategoryPlus } from "react-icons/tb";
-import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import Tooltip from "@mui/material/Tooltip";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -15,8 +14,10 @@ import EditSubCategory from "../../components/editSubcategory";
 import Search from "../../components/Search";
 import Shortcut from "../../components/Shortcut";
 import { AiOutlineProduct } from "react-icons/ai";
+import { MdKeyboardArrowUp, MdKeyboardArrowDown } from "react-icons/md";
+import Product from "../../components/Product";
 
-const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
+const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectProduct }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
     const storedState = localStorage.getItem("sidebarDropdowns");
     return storedState ? JSON.parse(storedState) : {};
@@ -24,6 +25,12 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
 
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState({});
+  const [products, setProducts] = useState([]);
+
+  const toggleDropdown2 = () => {
+    setDropdownOpen((prev) => ({ ...prev, product: !prev.product }));
+  };
 
   useEffect(() => {
     axios
@@ -59,6 +66,15 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
   useEffect(() => {
     localStorage.setItem("sidebarDropdowns", JSON.stringify(openDropdowns));
   }, [openDropdowns]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/products")
+      .then((response) => {
+        setProducts(response.data);
+      })
+      .catch((error) => console.error("Error fetching products:", error));
+  }, []);
 
   const toggleDropdown = (categoryId) => {
     setOpenDropdowns((prev) => {
@@ -121,20 +137,20 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
             {!isCollapsed && <h1 className="text-xl font-bold font-serif">Home</h1>}
           </div>
         </Tooltip>
-
-        {/* Category */}
         <Tooltip title="Category" arrow placement="right">
           <div
-            className="flex items-center space-x-3 p-2 hover:bg-white/20 rounded cursor-pointer"
+            className="flex items-center justify-between p-2 hover:bg-white/20 rounded cursor-pointer"
             onClick={() => toggleDropdown("main")}
           >
-            <TbCategoryPlus className="text-3xl font-bold" />
-            {!isCollapsed && <span className="font-bold font-serif text-xl">Category</span>}
+            <div className="flex items-center space-x-3">
+              <TbCategoryPlus className="text-3xl font-bold" />
+              {!isCollapsed && <span className="font-bold font-serif text-xl">Category</span>}
+            </div>
             {!isCollapsed &&
               (openDropdowns["main"] ? (
-                <MdKeyboardArrowUp className="ml-auto text-xl" />
+                <MdKeyboardArrowUp className="text-xl" />
               ) : (
-                <MdKeyboardArrowDown className="ml-auto text-xl" />
+                <MdKeyboardArrowDown className="text-xl" />
               ))}
           </div>
         </Tooltip>
@@ -159,7 +175,7 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                   >
                     {!isCollapsed && <span className="truncate w-32">{category.name}</span>}
                     {!isCollapsed &&
-                      (openDropdowns[category._id] ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />)}
+                      (openDropdowns[category._id] ? <MdKeyboardArrowUp className="ml-auto" /> : <MdKeyboardArrowDown className="ml-auto" />)}
                   </div>
                 </div>
 
@@ -183,19 +199,44 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory }) => {
                   </ul>
                 )}
               </li>
-
             ))}
           </ul>
         )}
-        <Tooltip title="Products" arrow placement="right">
-          <div
-            className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
-          >
-            <AiOutlineProduct className="text-3xl" />
-            {!isCollapsed && <h1 className="text-xl font-bold font-serif">Products</h1>}
-          </div>
-        </Tooltip>
+        <div>
+          {/* Products Button */}
+          <Tooltip title="Products" arrow placement="right">
+            <div
+              className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
+              onClick={toggleDropdown2}
+            >
+              <AiOutlineProduct className="text-3xl" />
+              {!isCollapsed && <h1 className="text-xl font-bold font-serif">Products</h1>}
+              {!isCollapsed &&
+                (dropdownOpen["product"] ? (
+                  <MdKeyboardArrowUp className="ml-auto text-xl" />
+                ) : (
+                  <MdKeyboardArrowDown className="ml-auto text-xl" />
+                ))}
+            </div>
+          </Tooltip>
+          {/* Dropdown Content */}
+          {dropdownOpen["product"] && !isCollapsed && (
+            <div className="ml-2 mt-2 space-y-2">
+              <Product />
+              {products.map((product) => (
+                <div
+                  key={product._id}
+                  className="p-2 flex items-center gap-2 hover:bg-white/20 rounded cursor-pointer"
+                  onClick={() => onSelectProduct(product)}
+                >
+                  <img src={product.image} alt={product.name} className="w-6 h-6 rounded-full object-cover" />
+                  <span>{product.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
     </div>
   );
 };
@@ -204,6 +245,7 @@ Sidebar.propTypes = {
   isCollapsed: PropTypes.bool.isRequired,
   onSelectCategory: PropTypes.func.isRequired,
   onSelectSubCategory: PropTypes.func.isRequired,
+  onSelectProduct: PropTypes.func.isRequired,
 };
 
 const Layout = () => {
@@ -214,6 +256,9 @@ const Layout = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [selectedSubCategory2, setSelectedSubCategory2] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [fullScreenImage, setFullScreenImage] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -249,47 +294,35 @@ const Layout = () => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
     setSelectedSubCategory2(null);
+    setSelectedProduct(null);
   };
 
   const handleSelectSubCategory = (subcategory) => {
     setSelectedSubCategory(subcategory);
     setSelectedCategory(null);
     setSelectedSubCategory2(null);
+    setSelectedProduct(null);
+  };
+
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    setSelectedCategory(null);
+    setSelectedSubCategory(null);
+    setSelectedSubCategory2(null);
   };
 
   const handleSearchCategorySelect = (category) => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
-
-    if (category.subcategories) {
-      setSelectedSubCategory2(category.subcategories);
-    } else {
-      setSelectedSubCategory2([]);
-    }
-
-    setSidebarCategory(null);
-    setSidebarSubCategory(null);
+    setSelectedSubCategory2(category.subcategories || []); // Ensure subcategories are set
+    setSelectedProduct(null);
   };
 
   const handleSearchSubCategorySelect = (subcategory) => {
     setSelectedSubCategory(subcategory);
     setSelectedCategory(null);
     setSelectedSubCategory2(null);
-
-    setSidebarCategory(null);
-    setSidebarSubCategory(null);
-  };
-
-  const handleDeleteCategory = async (categoryId) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/categories/${categoryId}`);
-        setSelectedCategory(null);
-        window.location.reload();
-      } catch (error) {
-        console.error("Error deleting category:", error);
-      }
-    }
+    setSelectedProduct(null);
   };
 
   const handleEditSubCategory = (subcategory) => {
@@ -340,6 +373,26 @@ const Layout = () => {
     }
   };
 
+  // Add this function to handle product deletion
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/products/${productId}`);
+        window.location.reload(); // Reload the page to reflect changes
+      } catch (error) {
+        console.error("Error deleting product:", error);
+      }
+    }
+  };
+
+  const handleImageClick = (imageUrl) => {
+    setFullScreenImage(imageUrl);
+  };
+
+  const handleCloseFullScreenImage = () => {
+    setFullScreenImage(null);
+  };
+
   return (
     <div className="h-screen w-screen bg-[#F5F7FA] fixed overflow-y-auto">
       <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-3 left-0 right-0 mx-2 z-50">
@@ -356,7 +409,7 @@ const Layout = () => {
           <div className="fixed justify-between right-32 flex">
             <Search
               onSelectCategory={handleSearchCategorySelect}
-              onSelectSubCategory2={handleSearchSubCategorySelect}
+              onSelectSubCategory={handleSearchSubCategorySelect} // Corrected prop name
             />
           </div>
           <Tooltip title="Logout" arrow placement="bottom">
@@ -372,7 +425,7 @@ const Layout = () => {
         isCollapsed={isCollapsed}
         onSelectCategory={handleSelectCategory}
         onSelectSubCategory={handleSelectSubCategory}
-        selectedSubCategory={selectedSubCategory}
+        onSelectProduct={handleSelectProduct}
       />
 
       <main className={`transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-64"} mt-20 text-black flex flex-col items-center md:items-start custom-scrollbar`}>
@@ -392,12 +445,12 @@ const Layout = () => {
 
         <div className="md:flex space-y-7 gap-6 p-6">
           <div className="w-full md:mt-[24px] max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
-                  transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                    transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
             <Category />
           </div>
 
           <div className="w-full max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
-                  transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                    transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
             <SubCategory />
           </div>
         </div>
@@ -412,6 +465,7 @@ const Layout = () => {
                   src={selectedCategory.image}
                   alt={selectedCategory.name}
                   className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                  onClick={() => handleImageClick(selectedCategory.image)}
                 />
                 <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
                   {selectedCategory.name}
@@ -443,7 +497,6 @@ const Layout = () => {
             </div>
           </div>
         )}
-
         {selectedSubCategory && (
           <div>
             <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">Sub-Category</h1>
@@ -453,6 +506,7 @@ const Layout = () => {
                   src={selectedSubCategory.image}
                   alt={selectedSubCategory.name}
                   className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                  onClick={() => handleImageClick(selectedSubCategory.image)}
                 />
                 <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
                   {selectedSubCategory.name}
@@ -504,6 +558,7 @@ const Layout = () => {
                       src={sub.image}
                       alt={sub.name}
                       className="w-[50px] h-[50px] rounded-full mx-2 object-cover cursor-pointer"
+                      onClick={() => handleImageClick(sub.image)}
                     />
                     <h1 className="text-2xl font-bold text-neutral-700 drop-shadow-lg">
                       {sub.name}
@@ -535,7 +590,61 @@ const Layout = () => {
             </div>
           </div>
         )}
+
+        {selectedProduct && (
+          <div>
+            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+              Product
+            </h1>
+            <div className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
+              <div className="flex items-center mb-4">
+                <img
+                  src={selectedProduct.image}
+                  alt={selectedProduct.name}
+                  className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                  onClick={() => handleImageClick(selectedProduct.image)}
+                />
+                <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
+                  {selectedProduct.name}
+                </h1>
+              </div>
+
+              <p className="ml-16 text-xl text-gray-700 font-semibold">
+                {selectedProduct.description}
+              </p>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <Tooltip title="Delete" arrow placement="top">
+                  <button
+                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                    onClick={() => handleDeleteProduct(selectedProduct._id)}
+                  >
+                    <Trash className="w-5 h-5 mr-2" />
+                    Delete
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {fullScreenImage && (
+        <div className="fixed inset-0 bg-black/60 p-10 flex items-center justify-center z-50"  >
+          <img
+            src={fullScreenImage}
+            alt="Full Screen"
+            className="max-w-full rounded-2xl max-h-full"
+          />
+          <button
+            className="absolute top-4 right-4 w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full"
+            onClick={handleCloseFullScreenImage}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <style>
         {`
           body {
@@ -573,5 +682,4 @@ const Layout = () => {
     </div>
   );
 };
-
 export default Layout;

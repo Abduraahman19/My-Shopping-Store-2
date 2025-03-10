@@ -25,6 +25,7 @@
     "axios": "^1.7.9",
     "flowbite-react": "^0.10.2",
     "formik": "^2.4.6",
+    "framer-motion": "^12.4.10",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.475.0",
     "mdb-react-ui-kit": "^9.0.0",

@@ -32,10 +32,6 @@ const validationSchema = Yup.object({
 });
 
 const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => {
-    // console.log(subCategoryId);
-    // console.log(categoryId);
-    // console.log(selectedSubCategory);
-    
     
     const [open, setOpen] = useState(false);
     const [categoryImage, setCategoryImage] = useState(null);
@@ -115,8 +111,12 @@ const EditSubCategory = ({ categoryId, subCategoryId, selectedSubCategory }) => 
                                 </div>
 
                                 <DialogActions>
+                                <Tooltip title="Cancel" arrow placement="bottom">
                                     <Button onClick={handleClose} color="error" variant="contained">Cancel</Button>
+                                    </Tooltip>
+                                    <Tooltip title="Save Changes" arrow placement="bottom">
                                     <Button  type="submit" color="primary" variant="contained">Save Changes</Button>
+                                    </Tooltip>
                                 </DialogActions>
                             </Form>
                         )}

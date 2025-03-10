@@ -69,7 +69,7 @@ const SubCategory = () => {
                 <div className="mb-4 font-bold text-2xl text-neutral-700 text-center">
                     Add a New Sub-Category
                 </div>
-                <Tooltip title="+ Add Sub-Category (Ctrl + Shift + S)" arrow placement="bottom">
+                <Tooltip title="+ Add Sub-Category" arrow placement="bottom">
                     <Button variant="contained" fullWidth onClick={handleClickOpen}>
                         + Add Sub-Category
                     </Button>
@@ -174,8 +174,12 @@ const SubCategory = () => {
                                 </div>
 
                                 <DialogActions>
+                                <Tooltip title="Cancel" arrow placement="bottom">
                                     <Button onClick={handleClose} color="error" variant="contained">Cancel</Button>
+                                    </Tooltip>
+                                    <Tooltip title="Save Sub-Category" arrow placement="bottom">
                                     <Button type="submit" color="primary" variant="contained">Save Sub-Category</Button>
+                                    </Tooltip>
                                 </DialogActions>
                             </Form>
                         )}
