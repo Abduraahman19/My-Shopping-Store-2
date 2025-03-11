@@ -88,11 +88,12 @@ const AddProduct = () => {
 
     return (
         <div>
-            <div className="p-2 flex items-center font-semibold hover:bg-white/20 rounded cursor-pointer" onClick={handleClickOpen}>
-                <AiOutlinePlus className="text-lg text-green-400" />
-                <span>Add New Product</span>
+            <Tooltip title="Add New Product" arrow placement="right">
+            <div className="p-2 flex items-center gap-2 font-semibold hover:bg-white/20 rounded cursor-pointer" onClick={handleClickOpen}>
+                <AiOutlinePlus className="text-2xl text-green-400" />
+                <span className="text-lg">Add New Product</span>
             </div>
-
+            </Tooltip>
             <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
                 <div className="bg-cyan-600 py-4 text-white text-2xl font-bold text-center">
                     Add New Product

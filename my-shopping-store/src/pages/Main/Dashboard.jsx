@@ -16,6 +16,7 @@ import Shortcut from "../../components/Shortcut";
 import { AiOutlineProduct } from "react-icons/ai";
 import { MdKeyboardArrowUp, MdKeyboardArrowDown } from "react-icons/md";
 import Product from "../../components/Product";
+import Editproduct from "../../components/editProduct"
 
 const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectProduct }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
@@ -127,7 +128,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
         className={`mt-[78px] mb-5 ml-2 rounded-xl bg-cyan-600 text-neutral-100 ${isCollapsed ? "w-16 opacity-50" : "w-64 opacity-100"
           } transition-all duration-300 shadow-[0_2px_10px_0px_rgba(0,0,0,2)] flex flex-col h-[calc(100vh-93px)] p-4 fixed top-0 left-0 overflow-y-auto custom-scrollbar`}
       >
-        {/* Home */}
         <Tooltip title="Home" arrow placement="right">
           <div
             className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
@@ -154,13 +154,11 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
               ))}
           </div>
         </Tooltip>
-        {/* Category List */}
         {openDropdowns["main"] && !isCollapsed && (
           <ul className="ml-2 mt-2 space-y-2">
             {categories.map((category) => (
               <li key={category._id}>
                 <div className="p-2 flex items-center hover:bg-white/20 rounded cursor-pointer">
-                  {/* Image Click will NOT toggle dropdown */}
                   <img
                     src={category.image}
                     alt={category.name}
@@ -168,7 +166,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
                     onClick={() => onSelectCategory(category)}
                   />
 
-                  {/* Text & Arrow Click will toggle dropdown */}
                   <div
                     className="flex items-center w-full cursor-pointer"
                     onClick={() => toggleDropdown(category._id)}
@@ -179,7 +176,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
                   </div>
                 </div>
 
-                {/* Subcategories */}
                 {openDropdowns[category._id] && subcategories[category._id] && !isCollapsed && (
                   <ul className="ml-4 mt-2 space-y-1">
                     {subcategories[category._id].map((subcategory) => (
@@ -203,7 +199,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
           </ul>
         )}
         <div>
-          {/* Products Button */}
           <Tooltip title="Products" arrow placement="right">
             <div
               className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
@@ -219,23 +214,32 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
                 ))}
             </div>
           </Tooltip>
-          {/* Dropdown Content */}
+
           {dropdownOpen["product"] && !isCollapsed && (
             <div className="ml-2 mt-2 space-y-2">
               <Product />
-              {products.map((product) => (
-                <div
-                  key={product._id}
-                  className="p-2 flex items-center gap-2 hover:bg-white/20 rounded cursor-pointer"
-                  onClick={() => onSelectProduct(product)}
-                >
-                  <img src={product.image} alt={product.name} className="w-6 h-6 rounded-full object-cover" />
-                  <span>{product.name}</span>
-                </div>
-              ))}
+              <div className="space-y-2">
+                {products.map((product) => (
+                  <div
+                    key={product._id}
+                    className="p-2 flex items-center gap-2 rounded hover:bg-white/20 cursor-pointer transition-all duration-200"
+                    onClick={() => onSelectProduct(product)}
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <span className="text-white text-base truncate w-[120px]">
+                      {product.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
+
       </div>
     </div>
   );
@@ -258,6 +262,8 @@ const Layout = () => {
   const [selectedSubCategory2, setSelectedSubCategory2] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [fullScreenImage, setFullScreenImage] = useState(null);
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
   const navigate = useNavigate();
 
@@ -314,7 +320,7 @@ const Layout = () => {
   const handleSearchCategorySelect = (category) => {
     setSelectedCategory(category);
     setSelectedSubCategory(null);
-    setSelectedSubCategory2(category.subcategories || []); // Ensure subcategories are set
+    setSelectedSubCategory2(category.subcategories || []);
     setSelectedProduct(null);
   };
 
@@ -373,12 +379,11 @@ const Layout = () => {
     }
   };
 
-  // Add this function to handle product deletion
   const handleDeleteProduct = async (productId) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         await axios.delete(`http://localhost:5000/api/products/${productId}`);
-        window.location.reload(); // Reload the page to reflect changes
+        window.location.reload();
       } catch (error) {
         console.error("Error deleting product:", error);
       }
@@ -391,8 +396,45 @@ const Layout = () => {
 
   const handleCloseFullScreenImage = () => {
     setFullScreenImage(null);
+    setScale(1); 
+    setPosition({ x: 0, y: 0 }); 
   };
 
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const newScale = scale + e.deltaY * -0.01; 
+    setScale(Math.min(Math.max(0.5, newScale), 3)); 
+  };
+
+  const handleMouseMove = (e) => {
+    if (scale > 1) { 
+      setPosition({
+        x: Math.min(Math.max(position.x + e.movementX, -100), 100), 
+        y: Math.min(Math.max(position.y + e.movementY, -100), 100),
+      });
+    }
+  };
+
+  const handleZoomIn = () => {
+    setScale((prevScale) => Math.min(prevScale + 0.5, 0.5));
+  };
+
+  const handleZoomOut = () => {
+    setScale((prevScale) => Math.max(prevScale - 0.5, 0.5)); 
+  };
+
+  const handleResetZoom = () => {
+    setScale(1); 
+    setPosition({ x: 1, y: 1 });
+  };
+
+  const handleDoubleClick = () => {
+    if (scale === 1) {
+      setScale(2); 
+    } else {
+      setScale(1); 
+    }
+  };
   return (
     <div className="h-screen w-screen bg-[#F5F7FA] fixed overflow-y-auto">
       <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-3 left-0 right-0 mx-2 z-50">
@@ -409,7 +451,7 @@ const Layout = () => {
           <div className="fixed justify-between right-32 flex">
             <Search
               onSelectCategory={handleSearchCategorySelect}
-              onSelectSubCategory={handleSearchSubCategorySelect} // Corrected prop name
+              onSelectSubCategory={handleSearchSubCategorySelect} 
             />
           </div>
           <Tooltip title="Logout" arrow placement="bottom">
@@ -596,7 +638,7 @@ const Layout = () => {
             <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
               Product
             </h1>
-            <div className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
+            <div className="max-w-2xl bg-cyan-800/20 mb-10 p-4 rounded-3xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
               <div className="flex items-center mb-4">
                 <img
                   src={selectedProduct.image}
@@ -609,14 +651,25 @@ const Layout = () => {
                 </h1>
               </div>
 
-              <p className="ml-16 text-xl text-gray-700 font-semibold">
+              <p className="mt-[-40px] text-gray-700 text-xl mb-2 ml-[114px] flex">
+                <span className="font-extrabold">Price:</span>
+                <span className="ml-1 font-bold">Rs.{selectedProduct.price}</span>
+              </p>
+
+              <p className="ml-[114px] text-xl text-gray-700 font-semibold">
                 {selectedProduct.description}
               </p>
 
               <div className="flex justify-end gap-4 mt-6">
+                {selectedProduct._id && (
+                  <Editproduct
+                    initialData={selectedProduct}
+                    onSubmit={() => window.location.reload()}
+                  />
+                )}
                 <Tooltip title="Delete" arrow placement="top">
                   <button
-                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-md shadow-md hover:bg-red-600 transition"
                     onClick={() => handleDeleteProduct(selectedProduct._id)}
                   >
                     <Trash className="w-5 h-5 mr-2" />
@@ -627,24 +680,66 @@ const Layout = () => {
             </div>
           </div>
         )}
-      </main>
 
+      </main>
       {fullScreenImage && (
-        <div className="fixed inset-0 bg-black/60 p-10 flex items-center justify-center z-50"  >
-          <img
-            src={fullScreenImage}
-            alt="Full Screen"
-            className="max-w-full rounded-2xl max-h-full"
-          />
+        <div
+          className="fixed inset-0 bg-black/60 p-10 flex items-center justify-center z-50"
+          onWheel={handleWheel} 
+        >
+          <div
+            className="overflow-hidden rounded-2xl"
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src={fullScreenImage}
+              alt="Full Screen"
+              className="transform rounded-3xl transition-transform duration-300 cursor-move"
+              style={{
+                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+                maxWidth: "100%",
+                maxHeight: "100%",
+              }}
+              onMouseMove={handleMouseMove}
+              onDoubleClick={handleDoubleClick} 
+            />
+          </div>
+
+          <div className="absolute bottom-4 left-4 flex gap-2">
+            <button
+              className="w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+              onClick={handleZoomIn}
+            >
+              +
+            </button>
+            <button
+             className=" w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+              onClick={handleZoomOut}
+            >
+              -
+            </button>
+            <button
+             className="w-12 h-12 flex justify-center py-1 bg-black/80 text-white text-3xl rounded-full hover:bg-black/90 transition-colors"
+              onClick={handleResetZoom}
+            >
+              ↺
+            </button>
+          </div>
+
           <button
-            className="absolute top-4 right-4 w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full"
+            className="absolute top-4 right-4 w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
             onClick={handleCloseFullScreenImage}
           >
             &times;
           </button>
         </div>
       )}
-
       <style>
         {`
           body {
