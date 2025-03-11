@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
-import { FaBars, FaHome } from "react-icons/fa";
+import { FaHome } from "react-icons/fa";
 import { TbCategoryPlus } from "react-icons/tb";
 import Tooltip from "@mui/material/Tooltip";
 import { FiLogOut } from "react-icons/fi";
@@ -17,6 +17,8 @@ import { AiOutlineProduct } from "react-icons/ai";
 import { MdKeyboardArrowUp, MdKeyboardArrowDown } from "react-icons/md";
 import Product from "../../components/Product";
 import Editproduct from "../../components/editProduct"
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectProduct }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
@@ -125,7 +127,7 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
   return (
     <div className="relative">
       <div
-        className={`mt-[78px] mb-5 ml-2 rounded-xl bg-cyan-600 text-neutral-100 ${isCollapsed ? "w-16 opacity-50" : "w-64 opacity-100"
+        className={`mt-[78px] mb-5 ml-2.5 rounded-xl bg-cyan-600 text-neutral-100 ${isCollapsed ? "w-16 opacity-50" : "w-64 opacity-100"
           } transition-all duration-300 shadow-[0_2px_10px_0px_rgba(0,0,0,2)] flex flex-col h-[calc(100vh-93px)] p-4 fixed top-0 left-0 overflow-y-auto custom-scrollbar`}
       >
         <Tooltip title="Home" arrow placement="right">
@@ -396,51 +398,81 @@ const Layout = () => {
 
   const handleCloseFullScreenImage = () => {
     setFullScreenImage(null);
-    setScale(1); 
-    setPosition({ x: 0, y: 0 }); 
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
   };
 
   const handleWheel = (e) => {
     e.preventDefault();
-    const newScale = scale + e.deltaY * -0.01; 
-    setScale(Math.min(Math.max(0.5, newScale), 3)); 
+    const newScale = scale + e.deltaY * -0.01;
+    setScale(Math.min(Math.max(0.5, newScale), 3));
   };
 
   const handleMouseMove = (e) => {
-    if (scale > 1) { 
+    if (scale > 1) {
       setPosition({
-        x: Math.min(Math.max(position.x + e.movementX, -100), 100), 
+        x: Math.min(Math.max(position.x + e.movementX, -100), 100),
         y: Math.min(Math.max(position.y + e.movementY, -100), 100),
       });
     }
   };
 
   const handleZoomIn = () => {
-    setScale((prevScale) => Math.min(prevScale + 0.5, 0.5));
+    setScale((prevScale) => Math.min(prevScale + 0.5, 10));
   };
 
   const handleZoomOut = () => {
-    setScale((prevScale) => Math.max(prevScale - 0.5, 0.5)); 
+    setScale((prevScale) => Math.max(prevScale - 0.5, 0.5));
   };
 
   const handleResetZoom = () => {
-    setScale(1); 
+    setScale(1);
     setPosition({ x: 1, y: 1 });
   };
 
   const handleDoubleClick = () => {
     if (scale === 1) {
-      setScale(2); 
+      setScale(2);
     } else {
-      setScale(1); 
+      setScale(1);
     }
   };
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.altKey && event.key === "o") {
+        setIsCollapsed(false); // Open Sidebar
+      }
+      if (event.altKey && event.key === "c") {
+        setIsCollapsed(true); // Close Sidebar
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="h-screen w-screen bg-[#F5F7FA] fixed overflow-y-auto">
       <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-3 left-0 right-0 mx-2 z-50">
         <div className="flex items-center w-full justify-between">
           <div className="gap-4 flex items-center">
-            <FaBars className="cursor-pointer text-xl" onClick={() => setIsCollapsed(!isCollapsed)} />
+            {isCollapsed ? (
+              <Tooltip title="Open Sidebar" arrow placement="bottom">
+                <MenuOpenIcon
+                  className="cursor-pointer text-xl"
+                  onClick={() => setIsCollapsed(false)}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title="Close Sidebar" arrow placement="bottom">
+                <MenuIcon
+                  className="cursor-pointer text-xl"
+                  onClick={() => setIsCollapsed(true)}
+                />
+              </Tooltip>
+            )}
             <h2
               onClick={() => window.location.reload()}
               className="text-lg sm:text-xl font-bold cursor-pointer font-serif"
@@ -448,10 +480,12 @@ const Layout = () => {
               My Shopping Store
             </h2>
           </div>
+
+
           <div className="fixed justify-between right-32 flex">
             <Search
               onSelectCategory={handleSearchCategorySelect}
-              onSelectSubCategory={handleSearchSubCategorySelect} 
+              onSelectSubCategory={handleSearchSubCategorySelect}
             />
           </div>
           <Tooltip title="Logout" arrow placement="bottom">
@@ -685,7 +719,7 @@ const Layout = () => {
       {fullScreenImage && (
         <div
           className="fixed inset-0 bg-black/60 p-10 flex items-center justify-center z-50"
-          onWheel={handleWheel} 
+          onWheel={handleWheel}
         >
           <div
             className="overflow-hidden rounded-2xl"
@@ -707,7 +741,7 @@ const Layout = () => {
                 maxHeight: "100%",
               }}
               onMouseMove={handleMouseMove}
-              onDoubleClick={handleDoubleClick} 
+              onDoubleClick={handleDoubleClick}
             />
           </div>
 
@@ -719,13 +753,13 @@ const Layout = () => {
               +
             </button>
             <button
-             className=" w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+              className=" w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
               onClick={handleZoomOut}
             >
               -
             </button>
             <button
-             className="w-12 h-12 flex justify-center py-1 bg-black/80 text-white text-3xl rounded-full hover:bg-black/90 transition-colors"
+              className="w-12 h-12 flex justify-center py-1 bg-black/80 text-white text-3xl rounded-full hover:bg-black/90 transition-colors"
               onClick={handleResetZoom}
             >
               ↺

@@ -53,6 +53,12 @@ const Shortcut = () => {
                         <p className="text-lg">
                             <strong className="text-cyan-600 font-bold text-xl">Alt + Shift + P</strong>  <span className="font-semibold">- Open Add Products Form</span>
                         </p>
+                        <p className="text-lg">
+                            <strong className="text-cyan-600 font-bold text-xl">Alt + O</strong>  <span className="font-semibold">- Open Sidebar</span>
+                        </p>
+                        <p className="text-lg">
+                            <strong className="text-cyan-600 font-bold text-xl">Alt + C</strong>  <span className="font-semibold">- Close Sidebar</span>
+                        </p>
                     </div>
                 </DialogContent>
 
