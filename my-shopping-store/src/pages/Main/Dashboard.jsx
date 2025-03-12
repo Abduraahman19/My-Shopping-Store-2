@@ -718,7 +718,7 @@ const Layout = () => {
       </main>
       {fullScreenImage && (
         <div
-          className="fixed inset-0 bg-black/60 p-10 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-white/50 backdrop-blur-md p-10 flex items-center justify-center z-50"
           onWheel={handleWheel}
         >
           <div
@@ -747,19 +747,19 @@ const Layout = () => {
 
           <div className="absolute bottom-4 left-4 flex gap-2">
             <button
-              className="w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+              className="w-12 h-12 flex justify-center bg-white/70 text-neutral-600 font-bold text-4xl rounded-full hover:bg-white/80 transition-colors"
               onClick={handleZoomIn}
             >
               +
             </button>
             <button
-              className=" w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+              className=" w-12 h-12 flex justify-center bg-white/70 text-neutral-600 font-bold text-4xl rounded-full hover:bg-white/80 transition-colors"
               onClick={handleZoomOut}
             >
               -
             </button>
             <button
-              className="w-12 h-12 flex justify-center py-1 bg-black/80 text-white text-3xl rounded-full hover:bg-black/90 transition-colors"
+              className="w-12 h-12 flex justify-center py-1 bg-white/70 font-bold text-neutral-600 text-3xl rounded-full hover:bg-white/80 transition-colors"
               onClick={handleResetZoom}
             >
               ↺
@@ -767,7 +767,7 @@ const Layout = () => {
           </div>
 
           <button
-            className="absolute top-4 right-4 w-12 h-12 flex justify-center bg-black/80 text-white text-4xl rounded-full hover:bg-black/90 transition-colors"
+            className="absolute top-4 right-4 w-12 h-12 flex justify-center bg-white/70 text-neutral-600 font-bold text-4xl rounded-full hover:bg-white/80 transition-colors"
             onClick={handleCloseFullScreenImage}
           >
             &times;
