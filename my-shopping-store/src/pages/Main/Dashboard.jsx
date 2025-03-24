@@ -361,6 +361,17 @@ const Layout = () => {
     return null;
   }
 
+  const handleDeleteCategory = async (categoryId) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/categories/${categoryId}`);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting category:", error);
+      }
+    }
+  };
+
   const handleDeleteSubCategory = async (categoryId, subCategoryId) => {
     console.log("categoryId", categoryId);
     console.log("subCategoryId", subCategoryId);
@@ -685,9 +696,11 @@ const Layout = () => {
                 </h1>
               </div>
 
-              <p className="mt-[-40px] text-gray-700 text-xl mb-2 ml-[114px] flex">
+              <p className="text-gray-700 text-xl mb-2 ml-[114px] flex">
                 <span className="font-extrabold">Price:</span>
-                <span className="ml-1 font-bold">Rs.{selectedProduct.price}</span>
+                <span className="ml-1 font-bold">
+                  Rs.{new Intl.NumberFormat("en-US").format(selectedProduct.price)}
+                </span>
               </p>
 
               <p className="ml-[114px] text-xl text-gray-700 font-semibold">

@@ -28,7 +28,12 @@ const VisuallyHiddenInput = styled("input")({
 const validationSchema = Yup.object({
     name: Yup.string().required("Product Name is required!"),
     description: Yup.string().required("Product Description is required!"),
-    price: Yup.number().required("Product Price is required!").positive("Price must be a positive number"),
+    price: Yup.string()
+        .required("Product Price is required!")
+        .test("is-positive", "Price must be a positive number", (value) => {
+            const numericValue = Number(value.replace(/,/g, ""));
+            return numericValue > 0;
+        }),
 });
 
 const AddProduct = () => {
@@ -59,7 +64,7 @@ const AddProduct = () => {
             const formData = new FormData();
             formData.append("name", values.name);
             formData.append("description", values.description);
-            formData.append("price", values.price);
+            formData.append("price", values.price.replace(/,/g, "")); // Remove commas before submission
             if (values.image) formData.append("image", values.image);
 
             await axios.post("http://localhost:5000/api/products", formData, {
@@ -86,13 +91,23 @@ const AddProduct = () => {
         return () => document.removeEventListener("keydown", handleKeyPress);
     }, [handleKeyPress]);
 
+    // Helper function to format the price with commas
+    const formatPriceWithCommas = (value) => {
+        if (!value) return "";
+        const numericValue = value.replace(/,/g, ""); // Remove existing commas
+        return new Intl.NumberFormat("en-US").format(numericValue);
+    };
+
     return (
         <div>
             <Tooltip title="Add New Product" arrow placement="right">
-            <div className="p-2 flex items-center gap-2 font-semibold hover:bg-white/20 rounded cursor-pointer" onClick={handleClickOpen}>
-                <AiOutlinePlus className="text-2xl text-green-400" />
-                <span className="text-lg">Add New Product</span>
-            </div>
+                <div
+                    className="p-2 flex items-center gap-2 font-semibold hover:bg-white/20 rounded cursor-pointer"
+                    onClick={handleClickOpen}
+                >
+                    <AiOutlinePlus className="text-2xl text-green-400" />
+                    <span className="text-lg">Add New Product</span>
+                </div>
             </Tooltip>
             <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
                 <div className="bg-cyan-600 py-4 text-white text-2xl font-bold text-center">
@@ -104,40 +119,92 @@ const AddProduct = () => {
                         validationSchema={validationSchema}
                         onSubmit={handleSubmit}
                     >
-                        {({ setFieldValue, resetForm }) => (
+                        {({ setFieldValue, values, resetForm }) => (
                             <Form className="space-y-4">
+                                {/* Product Name */}
                                 <div>
-                                    <Field as={TextField} label="Product Name" name="name" variant="outlined" fullWidth required />
+                                    <Field
+                                        as={TextField}
+                                        label="Product Name"
+                                        name="name"
+                                        variant="outlined"
+                                        fullWidth
+                                        required
+                                    />
                                     <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
                                 </div>
 
+                                {/* Product Description */}
                                 <div>
-                                    <Field as={TextField} label="Product Description" name="description" variant="outlined" fullWidth multiline rows={3} required />
-                                    <ErrorMessage name="description" component="div" className="text-red-500 text-sm" />
+                                    <Field
+                                        as={TextField}
+                                        label="Product Description"
+                                        name="description"
+                                        variant="outlined"
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        required
+                                    />
+                                    <ErrorMessage
+                                        name="description"
+                                        component="div"
+                                        className="text-red-500 text-sm"
+                                    />
                                 </div>
 
+                                {/* Price (With Commas) */}
                                 <div>
-                                    <Field as={TextField} label="Price" name="price" type="number" variant="outlined" fullWidth required />
+                                    <TextField
+                                        label="Price"
+                                        name="price"
+                                        variant="outlined"
+                                        fullWidth
+                                        required
+                                        value={values.price}
+                                        onChange={(e) => {
+                                            const formattedValue = formatPriceWithCommas(e.target.value);
+                                            setFieldValue("price", formattedValue);
+                                        }}
+                                    />
                                     <ErrorMessage name="price" component="div" className="text-red-500 text-sm" />
                                 </div>
 
+                                {/* Upload Image */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm">
-                                    <label className="block font-semibold mb-2 text-gray-700">Upload Product Image</label>
+                                    <label className="block font-semibold mb-2 text-gray-700">
+                                        Upload Product Image
+                                    </label>
                                     <Tooltip title="Upload Image" arrow placement="bottom">
                                         <Button component="label" variant="contained">
                                             Upload Image
-                                            <VisuallyHiddenInput type="file" accept="image/*" onChange={(e) => handleImageChange(e, setFieldValue)} />
+                                            <VisuallyHiddenInput
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleImageChange(e, setFieldValue)}
+                                            />
                                         </Button>
                                     </Tooltip>
-                                    {previewImage && <img src={previewImage} alt="Preview" className="w-32 h-32 object-cover rounded-lg border mt-2" />}
+                                    {previewImage && (
+                                        <img
+                                            src={previewImage}
+                                            alt="Preview"
+                                            className="w-32 h-32 object-cover rounded-lg border mt-2"
+                                        />
+                                    )}
                                 </div>
 
+                                {/* Actions */}
                                 <DialogActions>
                                     <Tooltip title="Cancel" arrow placement="bottom">
-                                        <Button onClick={() => handleClose(resetForm)} color="error" variant="contained">Cancel</Button>
+                                        <Button onClick={() => handleClose(resetForm)} color="error" variant="contained">
+                                            Cancel
+                                        </Button>
                                     </Tooltip>
                                     <Tooltip title="Add Product" arrow placement="bottom">
-                                        <Button type="submit" color="primary" variant="contained">Add Product</Button>
+                                        <Button type="submit" color="primary" variant="contained">
+                                            Add Product
+                                        </Button>
                                     </Tooltip>
                                 </DialogActions>
                             </Form>
