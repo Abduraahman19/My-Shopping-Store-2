@@ -5,11 +5,14 @@ const cors = require("cors");
 const path = require("path");
 
 // Routes
+const paymentRoutes = require("./routes/paymentRoutes"); // Added payment routes
+// Include other routes like auth, category, subCategory, product, and order routes if needed
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const subCategoryRoutes = require("./routes/subCategoryRoutes");
 const productRoutes = require("./routes/productRoutes");
-const orderRoutes = require("./routes/orderRoutes"); // ✅ Added Order API route
+const orderRoutes = require("./routes/orderRoutes");
+const stripeRoutes = require("./routes/stripeRoutes");
 
 dotenv.config();
 
@@ -33,7 +36,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api", subCategoryRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes); // ✅ Added Order API
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes); // Added payment routes
+app.use("/api/stripe", stripeRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;

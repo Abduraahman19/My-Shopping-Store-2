@@ -12,6 +12,7 @@ import { Trash } from "lucide-react";
 import EditCategory from "../../components/editCategory";
 import EditSubCategory from "../../components/editSubcategory";
 import Search from "../../components/Search";
+import Orders from "../../components/Orders";
 import Shortcut from "../../components/Shortcut";
 import { AiOutlineProduct } from "react-icons/ai";
 import { MdKeyboardArrowUp, MdKeyboardArrowDown } from "react-icons/md";
@@ -19,8 +20,9 @@ import Product from "../../components/Product";
 import Editproduct from "../../components/editProduct"
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import MenuIcon from '@mui/icons-material/Menu';
+import { FiPackage } from "react-icons/fi";
 
-const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectProduct }) => {
+const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectProduct, onOrdersClick }) => {
   const [openDropdowns, setOpenDropdowns] = useState(() => {
     const storedState = localStorage.getItem("sidebarDropdowns");
     return storedState ? JSON.parse(storedState) : {};
@@ -30,7 +32,6 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
   const [subcategories, setSubcategories] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState({});
   const [products, setProducts] = useState([]);
-
   const toggleDropdown2 = () => {
     setDropdownOpen((prev) => ({ ...prev, product: !prev.product }));
   };
@@ -241,7 +242,17 @@ const Sidebar = ({ isCollapsed, onSelectCategory, onSelectSubCategory, onSelectP
             </div>
           )}
         </div>
-
+        <Tooltip title="Orders" arrow placement="right">
+          <div
+            className="cursor-pointer gap-3 text-white p-2 hover:bg-white/20 rounded flex items-center"
+            onClick={onOrdersClick}
+          >
+            <FiPackage className="text-3xl" />
+            {!isCollapsed && (
+              <h1 className="text-xl font-bold font-serif">Orders</h1>
+            )}
+          </div>
+        </Tooltip>
       </div>
     </div>
   );
@@ -252,6 +263,7 @@ Sidebar.propTypes = {
   onSelectCategory: PropTypes.func.isRequired,
   onSelectSubCategory: PropTypes.func.isRequired,
   onSelectProduct: PropTypes.func.isRequired,
+  onOrdersClick: PropTypes.func.isRequired,
 };
 
 const Layout = () => {
@@ -266,8 +278,13 @@ const Layout = () => {
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [showOrders, setShowOrders] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleOrdersClick = () => {
+    setShowOrders(!showOrders);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -303,6 +320,7 @@ const Layout = () => {
     setSelectedSubCategory(null);
     setSelectedSubCategory2(null);
     setSelectedProduct(null);
+    setShowOrders(false);
   };
 
   const handleSelectSubCategory = (subcategory) => {
@@ -310,6 +328,7 @@ const Layout = () => {
     setSelectedCategory(null);
     setSelectedSubCategory2(null);
     setSelectedProduct(null);
+    setShowOrders(false);
   };
 
   const handleSelectProduct = (product) => {
@@ -317,6 +336,7 @@ const Layout = () => {
     setSelectedCategory(null);
     setSelectedSubCategory(null);
     setSelectedSubCategory2(null);
+    setShowOrders(false);
   };
 
   const handleSearchCategorySelect = (category) => {
@@ -324,6 +344,7 @@ const Layout = () => {
     setSelectedSubCategory(null);
     setSelectedSubCategory2(category.subcategories || []);
     setSelectedProduct(null);
+    setShowOrders(false);
   };
 
   const handleSearchSubCategorySelect = (subcategory) => {
@@ -331,6 +352,7 @@ const Layout = () => {
     setSelectedCategory(null);
     setSelectedSubCategory2(null);
     setSelectedProduct(null);
+    setShowOrders(false);
   };
 
   const handleEditSubCategory = (subcategory) => {
@@ -466,7 +488,7 @@ const Layout = () => {
 
   return (
     <div className="h-screen w-screen bg-[#F5F7FA] fixed overflow-y-auto">
-      <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-3 left-0 right-0 mx-2 z-50">
+      <nav className="bg-cyan-600 backdrop-blur-lg text-neutral-100 rounded-xl px-5 py-3 flex items-center justify-between fixed top-2 left-0 right-0 mx-2 z-50">
         <div className="flex items-center w-full justify-between">
           <div className="gap-4 flex items-center">
             {isCollapsed ? (
@@ -513,159 +535,73 @@ const Layout = () => {
         onSelectCategory={handleSelectCategory}
         onSelectSubCategory={handleSelectSubCategory}
         onSelectProduct={handleSelectProduct}
+        onOrdersClick={handleOrdersClick}
       />
 
       <main className={`transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-64"} mt-20 text-black flex flex-col items-center md:items-start custom-scrollbar`}>
-        <div className="pl-6 pt-4 hidden sm:block">
-          <Shortcut />
-        </div>
+        {showOrders ? (
+          <Orders />
+        ) : (
+          <>
+            <div className="pl-6 pt-4 hidden sm:block">
+              <Shortcut />
+            </div>
 
-        <div className="p-6 text-center md:text-left">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-700 drop-shadow-lg">
-            Welcome to
-            <span className="text-cyan-600 ml-2"> My Shopping Store</span>
-          </h1>
-          <p className="mt-3 text-lg text-gray-700 font-semibold">
-            Manage your categories efficiently!
-          </p>
-        </div>
+            <div className="p-6 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-700 drop-shadow-lg">
+                Welcome to
+                <span className="text-cyan-600 ml-2"> My Shopping Store</span>
+              </h1>
+              <p className="mt-3 text-lg text-gray-700 font-semibold">
+                Manage your categories efficiently!
+              </p>
+            </div>
 
-        <div className="md:flex space-y-7 gap-6 p-6">
-          <div className="w-full md:mt-[24px] max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
-                    transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-            <Category />
-          </div>
-
-          <div className="w-full max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
-                    transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-            <SubCategory />
-          </div>
-        </div>
-        {selectedCategory && (
-          <div>
-            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
-              Category
-            </h1>
-            <div className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
-              <div className="flex items-center mb-4">
-                <img
-                  src={selectedCategory.image}
-                  alt={selectedCategory.name}
-                  className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
-                  onClick={() => handleImageClick(selectedCategory.image)}
-                />
-                <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
-                  {selectedCategory.name}
-                </h1>
+            <div className="md:flex space-y-7 gap-6 p-6">
+              <div className="w-full md:mt-[24px] max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
+                        transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                <Category />
               </div>
 
-              <p className="ml-16 text-xl text-gray-700 font-semibold">
-                {selectedCategory.description}
-              </p>
-
-              <div className="flex justify-end gap-4 mt-6">
-                {selectedCategory._id && (
-                  <EditCategory
-                    initialData={selectedCategory}
-                    onSubmit={() => window.location.reload()}
-                  />
-                )}
-
-                <Tooltip title="Delete" arrow placement="top">
-                  <button
-                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
-                    onClick={() => handleDeleteCategory(selectedCategory._id)}
-                  >
-                    <Trash className="w-5 h-5 mr-2" />
-                    Delete
-                  </button>
-                </Tooltip>
+              <div className="w-full max-w-xl bg-cyan-800/20 p-6 rounded-xl shadow-lg border border-gray-400 
+                        transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                <SubCategory />
               </div>
             </div>
-          </div>
-        )}
-        {selectedSubCategory && (
-          <div>
-            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">Sub-Category</h1>
-            <div className="max-w-xl bg-cyan-800/20 p-6 mb-10 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
-              <div className="flex items-center mb-4">
-                <img
-                  src={selectedSubCategory.image}
-                  alt={selectedSubCategory.name}
-                  className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
-                  onClick={() => handleImageClick(selectedSubCategory.image)}
-                />
-                <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
-                  {selectedSubCategory.name}
+            {selectedCategory && (
+              <div>
+                <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+                  Category
                 </h1>
-              </div>
-
-              <p className="ml-16 text-xl text-gray-700 font-semibold">
-                {selectedSubCategory.description}
-              </p>
-
-              <div className="flex justify-end gap-4 mt-6">
-                <EditSubCategory
-                  selectedSubCategory={selectedSubCategory}
-                  categoryId={findCategoryById(JSON.parse(sessionStorage.getItem("categories")), selectedSubCategory._id)?.category}
-                  subCategoryId={selectedSubCategory._id}
-                  onSubmit={() => window.location.reload()}
-                />
-
-                <Tooltip title="Delete" arrow placement="top">
-                  <button
-                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
-                    onClick={async () => {
-                      await handleDeleteSubCategory(selectedCategory, selectedSubCategory._id);
-                      setSelectedSubCategory(null);
-                    }}
-                  >
-                    <Trash className="w-5 h-5 mr-2" />
-                    Delete
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedSubCategory2 && selectedSubCategory2.length > 0 && (
-          <div>
-            <h1 className="ml-8 mb-2 text-xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
-              Sub-Categories
-            </h1>
-            <div className="grid lg:grid-cols-2 md:grid-cols-1">
-              {selectedSubCategory2.map((sub) => (
-                <div
-                  key={sub._id}
-                  className="max-w-xl bg-cyan-800/20 mb-10 p-2 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8"
-                >
-                  <div className="flex items-center ">
+                <div className="max-w-2xl bg-cyan-800/20 mb-10 p-6 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
+                  <div className="flex items-center mb-4">
                     <img
-                      src={sub.image}
-                      alt={sub.name}
-                      className="w-[50px] h-[50px] rounded-full mx-2 object-cover cursor-pointer"
-                      onClick={() => handleImageClick(sub.image)}
+                      src={selectedCategory.image}
+                      alt={selectedCategory.name}
+                      className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                      onClick={() => handleImageClick(selectedCategory.image)}
                     />
-                    <h1 className="text-2xl font-bold text-neutral-700 drop-shadow-lg">
-                      {sub.name}
+                    <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
+                      {selectedCategory.name}
                     </h1>
                   </div>
 
-                  <p className="ml-16 text-lg text-gray-700 font-semibold">
-                    {sub.description}
+                  <p className="ml-16 text-xl text-gray-700 font-semibold">
+                    {selectedCategory.description}
                   </p>
-                  <div className="flex justify-end pb-1 pr-1 gap-2 mt-1">
-                    <EditSubCategory
-                      selectedSubCategory={sub}
-                      categoryId={selectedCategory?._id}
-                      subCategoryId={sub._id}
-                      onSubmit={() => window.location.reload()}
-                    />
+
+                  <div className="flex justify-end gap-4 mt-6">
+                    {selectedCategory._id && (
+                      <EditCategory
+                        initialData={selectedCategory}
+                        onSubmit={() => window.location.reload()}
+                      />
+                    )}
+
                     <Tooltip title="Delete" arrow placement="top">
                       <button
                         className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
-                        onClick={() => handleDeleteSubCategory(selectedCategory?._id, sub._id)}
+                        onClick={() => handleDeleteCategory(selectedCategory._id)}
                       >
                         <Trash className="w-5 h-5 mr-2" />
                         Delete
@@ -673,66 +609,157 @@ const Layout = () => {
                     </Tooltip>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
+            {selectedSubCategory && (
+              <div>
+                <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">Sub-Category</h1>
+                <div className="max-w-xl bg-cyan-800/20 p-6 mb-10 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
+                  <div className="flex items-center mb-4">
+                    <img
+                      src={selectedSubCategory.image}
+                      alt={selectedSubCategory.name}
+                      className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                      onClick={() => handleImageClick(selectedSubCategory.image)}
+                    />
+                    <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
+                      {selectedSubCategory.name}
+                    </h1>
+                  </div>
 
-        {selectedProduct && (
-          <div>
-            <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
-              Product
-            </h1>
-            <div className="max-w-2xl bg-cyan-800/20 mb-10 p-4 rounded-3xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
-              <div className="flex items-center mb-4">
-                <img
-                  src={selectedProduct.image}
-                  alt={selectedProduct.name}
-                  className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
-                  onClick={() => handleImageClick(selectedProduct.image)}
-                />
-                <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
-                  {selectedProduct.name}
+                  <p className="ml-16 text-xl text-gray-700 font-semibold">
+                    {selectedSubCategory.description}
+                  </p>
+
+                  <div className="flex justify-end gap-4 mt-6">
+                    <EditSubCategory
+                      selectedSubCategory={selectedSubCategory}
+                      categoryId={findCategoryById(JSON.parse(sessionStorage.getItem("categories")), selectedSubCategory._id)?.category}
+                      subCategoryId={selectedSubCategory._id}
+                      onSubmit={() => window.location.reload()}
+                    />
+
+                    <Tooltip title="Delete" arrow placement="top">
+                      <button
+                        className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                        onClick={async () => {
+                          await handleDeleteSubCategory(selectedCategory, selectedSubCategory._id);
+                          setSelectedSubCategory(null);
+                        }}
+                      >
+                        <Trash className="w-5 h-5 mr-2" />
+                        Delete
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedSubCategory2 && selectedSubCategory2.length > 0 && (
+              <div>
+                <h1 className="ml-8 mb-2 text-xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+                  Sub-Categories
                 </h1>
+                <div className="grid lg:grid-cols-2 md:grid-cols-1">
+                  {selectedSubCategory2.map((sub) => (
+                    <div
+                      key={sub._id}
+                      className="max-w-xl bg-cyan-800/20 mb-10 p-2 rounded-xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8"
+                    >
+                      <div className="flex items-center ">
+                        <img
+                          src={sub.image}
+                          alt={sub.name}
+                          className="w-[50px] h-[50px] rounded-full mx-2 object-cover cursor-pointer"
+                          onClick={() => handleImageClick(sub.image)}
+                        />
+                        <h1 className="text-2xl font-bold text-neutral-700 drop-shadow-lg">
+                          {sub.name}
+                        </h1>
+                      </div>
+
+                      <p className="ml-16 text-lg text-gray-700 font-semibold">
+                        {sub.description}
+                      </p>
+                      <div className="flex justify-end pb-1 pr-1 gap-2 mt-1">
+                        <EditSubCategory
+                          selectedSubCategory={sub}
+                          categoryId={selectedCategory?._id}
+                          subCategoryId={sub._id}
+                          onSubmit={() => window.location.reload()}
+                        />
+                        <Tooltip title="Delete" arrow placement="top">
+                          <button
+                            className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
+                            onClick={() => handleDeleteSubCategory(selectedCategory?._id, sub._id)}
+                          >
+                            <Trash className="w-5 h-5 mr-2" />
+                            Delete
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <p className="text-gray-700 text-xl mb-2 ml-[114px] flex">
-                <span className="font-extrabold">Price:</span>
-                <span className="ml-1 font-bold">
-                  Rs.{new Intl.NumberFormat("en-US").format(selectedProduct.price)}
-                </span>
-              </p>
+            {selectedProduct && (
+              <div>
+                <h1 className="ml-8 mb-2 text-2xl text-neutral-500 drop-shadow-2xl shadow-black font-bold">
+                  Product
+                </h1>
+                <div className="max-w-2xl bg-cyan-800/20 mb-10 p-4 rounded-3xl shadow-lg border border-gray-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl mx-8">
+                  <div className="flex items-center mb-4">
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer"
+                      onClick={() => handleImageClick(selectedProduct.image)}
+                    />
+                    <h1 className="text-3xl font-bold text-neutral-700 drop-shadow-lg">
+                      {selectedProduct.name}
+                    </h1>
+                  </div>
+                  <p className="text-gray-700 text-xl mb-2 ml-[114px] flex">
+                    <span className="font-extrabold">Price:</span>
+                    <span className="ml-1 font-bold">
+                      Rs.{new Intl.NumberFormat("en-US").format(selectedProduct.price)}
+                    </span>
+                  </p>
 
-              <p className="ml-[114px] text-xl text-gray-700 font-semibold">
-                {selectedProduct.description}
-              </p>
+                  <p className="ml-[114px] text-xl text-gray-700 font-semibold">
+                    {selectedProduct.description}
+                  </p>
 
-              <div className="flex justify-end gap-4 mt-6">
-                {selectedProduct._id && (
-                  <Editproduct
-                    initialData={selectedProduct}
-                    onSubmit={() => window.location.reload()}
-                  />
-                )}
-                <Tooltip title="Delete" arrow placement="top">
-                  <button
-                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-md shadow-md hover:bg-red-600 transition"
-                    onClick={() => handleDeleteProduct(selectedProduct._id)}
-                  >
-                    <Trash className="w-5 h-5 mr-2" />
-                    Delete
-                  </button>
-                </Tooltip>
+                  <div className="flex justify-end gap-4 mt-6">
+                    {selectedProduct._id && (
+                      <Editproduct
+                        initialData={selectedProduct}
+                        onSubmit={() => window.location.reload()}
+                      />
+                    )}
+                    <Tooltip title="Delete" arrow placement="top">
+                      <button
+                        className="flex items-center px-4 py-2 bg-red-500 text-white rounded-md shadow-md hover:bg-red-600 transition"
+                        onClick={() => handleDeleteProduct(selectedProduct._id)}
+                      >
+                        <Trash className="w-5 h-5 mr-2" />
+                        Delete
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
-
       </main>
       {fullScreenImage && (
         <div
-          className="fixed inset-0 bg-white/50 backdrop-blur-md p-10 flex items-center justify-center z-50"
-          onWheel={handleWheel}
+        className="fixed inset-0 bg-white/50 backdrop-blur-md p-10 flex items-center justify-center z-50"
+        onWheel={handleWheel}
         >
           <div
             className="overflow-hidden rounded-2xl"
