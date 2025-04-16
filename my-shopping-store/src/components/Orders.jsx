@@ -284,7 +284,7 @@ const Orders = () => {
               <FiFile className="mr-2" />
               Payment Proof
             </h4>
-            <div className="border rounded-lg p-4 bg-gray-50">
+            <div className="border rounded-2xl p-4 bg-gray-50">
               {payment.details.paymentProof.endsWith('.pdf') ? (
                 <div>
                   <a
@@ -341,7 +341,7 @@ const Orders = () => {
                         <motion.div
                           initial={{ scale: 0.95 }}
                           animate={{ scale: 1 }}
-                          className="overflow-hidden rounded-lg shadow-2xl"
+                          className="overflow-hidden rounded-xl shadow-2xl"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <img
@@ -359,7 +359,7 @@ const Orders = () => {
                     className="relative group cursor-pointer w-fit mx-auto"
                     onClick={() => setIsImageModalOpen(true)}
                   >
-                    <div className="relative overflow-hidden rounded-lg border-2 border-gray-200 group-hover:border-cyan-400 transition-all duration-300">
+                    <div className="relative overflow-hidden rounded-2xl border-2 border-gray-200 group-hover:border-cyan-400 transition-all duration-300">
                       <img
                         src={`http://localhost:5000/${payment.details.paymentProof}`}
                         alt="Payment proof thumbnail"

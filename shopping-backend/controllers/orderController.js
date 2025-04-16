@@ -13,7 +13,6 @@ exports.createOrder = async (req, res) => {
     try {
         const { customer, products, shippingMethod, paymentMethod, status } = req.body;
 
-        // Validate required fields
         if (!customer || !products || !shippingMethod || !paymentMethod) {
             return res.status(400).json({
                 success: false,
@@ -22,18 +21,16 @@ exports.createOrder = async (req, res) => {
             });
         }
 
-        // Calculate order totals
         const { totalProducts, totalQuantity, grandTotal } = calculateOrderDetails(products);
 
-        // Determine payment status
-        let paymentStatus ="Unpaid"
+        let paymentStatus = "Unpaid";
 
-        // Create Order
         const newOrder = new Order({
             customer,
             products: products.map(p => ({
-                product: p.productId, // Reference to product ID
+                product: p.productId,
                 name: p.name,
+                image: p.image, // ✅ Image field added
                 price: p.price,
                 quantity: p.quantity,
                 totalPrice: p.price * p.quantity
@@ -49,7 +46,6 @@ exports.createOrder = async (req, res) => {
 
         await newOrder.save();
 
-        // Return success response with order details (excluding sensitive payment info)
         const responseOrder = newOrder.toObject();
         res.status(201).json({
             success: true,
@@ -67,16 +63,13 @@ exports.createOrder = async (req, res) => {
     }
 };
 
-
 // 🟡 Get all orders (with pagination and filtering)
 exports.getOrders = async (req, res) => {
     try {
-        // Pagination
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Filtering
         const filter = {};
         if (req.query.status) filter.status = req.query.status;
         if (req.query.paymentStatus) filter.paymentStatus = req.query.paymentStatus;
@@ -97,7 +90,7 @@ exports.getOrders = async (req, res) => {
             pages: Math.ceil(totalOrders / limit),
             orders: orders.map(order => {
                 const orderObj = order.toObject();
-                delete orderObj.paymentDetails; // Remove sensitive data
+                delete orderObj.paymentDetails;
                 return orderObj;
             })
         });
@@ -122,7 +115,6 @@ exports.getOrderById = async (req, res) => {
             error: 'Order not found' 
         });
 
-        // Return order without sensitive payment details
         const orderObj = order.toObject();
         delete orderObj.paymentDetails;
 
@@ -152,17 +144,15 @@ exports.updateOrder = async (req, res) => {
             error: 'Order not found' 
         });
 
-        // Only allow certain fields to be updated
         const updates = {};
         if (status) updates.status = status;
         if (paymentStatus) updates.paymentStatus = paymentStatus;
-        
-        // If products are updated, recalculate totals
+
         if (products && Array.isArray(products)) {
             const { totalProducts, totalQuantity, grandTotal } = calculateOrderDetails(products);
-            updates.products = products.map(p => ({ 
-                ...p, 
-                totalPrice: p.price * p.quantity 
+            updates.products = products.map(p => ({
+                ...p,
+                totalPrice: p.price * p.quantity
             }));
             updates.totalProducts = totalProducts;
             updates.totalQuantity = totalQuantity;
@@ -170,12 +160,11 @@ exports.updateOrder = async (req, res) => {
         }
 
         const updatedOrder = await Order.findByIdAndUpdate(
-            id, 
-            updates, 
+            id,
+            updates,
             { new: true, runValidators: true }
         );
 
-        // Return updated order without sensitive payment details
         const orderObj = updatedOrder.toObject();
         delete orderObj.paymentDetails;
 
@@ -232,11 +221,11 @@ exports.updatePaymentStatus = async (req, res) => {
 
         const order = await Order.findByIdAndUpdate(
             orderId,
-            { 
+            {
                 paymentStatus,
-                $set: { 
+                $set: {
                     'paymentDetails.transactionId': transactionId,
-                    'paymentDetails.paymentDate': new Date() 
+                    'paymentDetails.paymentDate': new Date()
                 }
             },
             { new: true }
