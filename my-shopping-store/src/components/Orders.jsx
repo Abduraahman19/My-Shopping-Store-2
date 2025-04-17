@@ -731,6 +731,7 @@ const Orders = () => {
                               <table className="min-w-full divide-y divide-gray-300">
                                 <thead className="bg-gray-200">
                                   <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
@@ -744,14 +745,31 @@ const Orders = () => {
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       transition={{ duration: 0.3 }}
+                                      className="divide-x divide-gray-300" // 🔥 vertical lines between columns
                                     >
-                                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-                                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{product.quantity}</td>
-                                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">Rs.{product.price.toLocaleString()}</td>
-                                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">Rs.{product.totalPrice.toLocaleString()}</td>
+                                      <td className="px-4 py-2 whitespace-nowrap border-r border-gray-300">
+                                        <img
+                                          src={product.image}
+                                          alt={product.name}
+                                          className="h-12 w-12 object-cover rounded-md border"
+                                        />
+                                      </td>
+                                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
+                                        {product.name}
+                                      </td>
+                                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-r border-gray-300">
+                                        {product.quantity}
+                                      </td>
+                                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-r border-gray-300">
+                                        Rs.{product.price.toLocaleString()}
+                                      </td>
+                                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        Rs.{product.totalPrice.toLocaleString()}
+                                      </td>
                                     </motion.tr>
                                   ))}
                                 </tbody>
+
                               </table>
                             </div>
                           </motion.div>
