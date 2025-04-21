@@ -36,7 +36,6 @@ const Category = () => {
     const [categoryImage, setCategoryImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
 
-    // 🔥 Shortcut Key Function
     const handleShortcut = useCallback((event) => {
         if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "c") {
             event.preventDefault();
@@ -44,7 +43,6 @@ const Category = () => {
         }
     }, []);
 
-    // 🔥 Add Shortcut Listener
     useEffect(() => {
         window.addEventListener("keydown", handleShortcut);
         return () => window.removeEventListener("keydown", handleShortcut);

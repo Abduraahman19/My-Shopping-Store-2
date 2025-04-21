@@ -23,12 +23,11 @@ const SearchBar = ({ onSelectCategory, onSelectSubCategory2 }) => {
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
-  // Shortcut Key (Ctrl + Shift + S) to Open Search
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        setOpen(true); // Open search modal
+        setOpen(true); 
       }
     };
 
@@ -39,22 +38,21 @@ const SearchBar = ({ onSelectCategory, onSelectSubCategory2 }) => {
   const handleSelectCategory = (category) => {
     setSearchTerm("");
     setOpen(false);
-    onSelectCategory(category); // Set selected category
+    onSelectCategory(category); 
 
-    // Fetch subcategories for the selected category
     axios
       .get(`http://localhost:5000/api/categories/${category._id}/subcategories`)
       .then((response) => {
         if (Array.isArray(response.data)) {
-          onSelectSubCategory2(response.data); // Update subcategories
+          onSelectSubCategory2(response.data); 
           console.log("response.data", response.data);
         } else {
-          onSelectSubCategory2([]); // If response format is wrong, set an empty array
+          onSelectSubCategory2([]);
         }
       })
       .catch((error) => {
         console.error("Error fetching subcategories:", error);
-        onSelectSubCategory2([]); // Clear subcategories if error occurs
+        onSelectSubCategory2([]); 
       });
   };
 

@@ -473,10 +473,10 @@ const Layout = () => {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.altKey && event.key === "o") {
-        setIsCollapsed(false); // Open Sidebar
+        setIsCollapsed(false); 
       }
       if (event.altKey && event.key === "c") {
-        setIsCollapsed(true); // Close Sidebar
+        setIsCollapsed(true); 
       }
     };
 

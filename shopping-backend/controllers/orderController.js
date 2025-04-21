@@ -1,6 +1,5 @@
 const Order = require('../models/orderModel');
 
-// Helper function to calculate totals
 const calculateOrderDetails = (products) => {
     const totalProducts = products.length;
     const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
@@ -8,7 +7,6 @@ const calculateOrderDetails = (products) => {
     return { totalProducts, totalQuantity, grandTotal };
 };
 
-// 🟢 Create a new order
 exports.createOrder = async (req, res) => {
     try {
         const { customer, products, shippingMethod, paymentMethod, status } = req.body;
@@ -30,7 +28,7 @@ exports.createOrder = async (req, res) => {
             products: products.map(p => ({
                 product: p.productId,
                 name: p.name,
-                image: p.image, // ✅ Image field added
+                image: p.image, 
                 price: p.price,
                 quantity: p.quantity,
                 totalPrice: p.price * p.quantity
@@ -63,7 +61,6 @@ exports.createOrder = async (req, res) => {
     }
 };
 
-// 🟡 Get all orders (with pagination and filtering)
 exports.getOrders = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -104,7 +101,6 @@ exports.getOrders = async (req, res) => {
     }
 };
 
-// 🔵 Get order by ID
 exports.getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -132,7 +128,6 @@ exports.getOrderById = async (req, res) => {
     }
 };
 
-// 🟠 Update order status and payment status
 exports.updateOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -182,7 +177,6 @@ exports.updateOrder = async (req, res) => {
     }
 };
 
-// 🔴 Delete order (admin only)
 exports.deleteOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -207,7 +201,6 @@ exports.deleteOrder = async (req, res) => {
     }
 };
 
-// 🟣 Update payment status (for payment gateways webhooks)
 exports.updatePaymentStatus = async (req, res) => {
     try {
         const { orderId, paymentStatus, transactionId } = req.body;

@@ -27,7 +27,6 @@ const Orders = () => {
       try {
         setLoading(true);
 
-        // Fetch orders and payments in parallel
         const [ordersResponse, paymentsResponse] = await Promise.all([
           axios.get('http://localhost:5000/api/orders', {
             params: {
@@ -40,12 +39,10 @@ const Orders = () => {
           axios.get('http://localhost:5000/api/payments')
         ]);
 
-        // Check if responses are valid
         if (!ordersResponse.data || !paymentsResponse.data) {
           throw new Error("Invalid response from server");
         }
 
-        // Get orders and payments data
         const ordersData = Array.isArray(ordersResponse.data.orders)
           ? ordersResponse.data.orders
           : Array.isArray(ordersResponse.data)
@@ -58,7 +55,6 @@ const Orders = () => {
             ? paymentsResponse.data
             : [];
 
-        // Map payments to their corresponding orders
         const ordersWithPayments = ordersData.map(order => {
           const payment = paymentsData.find(p => p.orderId === order._id);
           return {
@@ -277,7 +273,6 @@ const Orders = () => {
         </h4>
         {renderDetails()}
 
-        {/* Payment Proof */}
         {payment.details?.paymentProof && (
           <div className="mt-6">
             <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
@@ -304,7 +299,6 @@ const Orders = () => {
                 </div>
               ) : (
                 <div>
-                  {/* Image Modal */}
                   {isImageModalOpen && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -354,7 +348,6 @@ const Orders = () => {
                     </motion.div>
                   )}
 
-                  {/* Thumbnail Preview */}
                   <div
                     className="relative group cursor-pointer w-fit mx-auto"
                     onClick={() => setIsImageModalOpen(true)}
@@ -435,7 +428,6 @@ const Orders = () => {
         </div>
       </motion.div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center">
           <label className="mr-2 text-sm font-medium text-gray-700">Status:</label>
@@ -563,7 +555,6 @@ const Orders = () => {
                     >
                       <div className="border-t border-gray-200 px-5 py-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {/* Customer Information */}
                           <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -587,7 +578,6 @@ const Orders = () => {
                             </div>
                           </motion.div>
 
-                          {/* Order Details */}
                           <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -709,7 +699,6 @@ const Orders = () => {
                             </div>
                           </motion.div>
 
-                          {/* Payment Details */}
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -719,7 +708,6 @@ const Orders = () => {
                             {renderPaymentDetails(order)}
                           </motion.div>
 
-                          {/* Products */}
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -745,7 +733,7 @@ const Orders = () => {
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       transition={{ duration: 0.3 }}
-                                      className="divide-x divide-gray-300" // 🔥 vertical lines between columns
+                                      className="divide-x divide-gray-300" 
                                     >
                                       <td className="px-4 py-2 whitespace-nowrap border-r border-gray-300">
                                         <img

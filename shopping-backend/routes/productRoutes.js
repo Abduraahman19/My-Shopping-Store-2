@@ -4,7 +4,6 @@ const { getProducts, getProductById, createProduct, updateProduct, deleteProduct
 
 const router = express.Router();
 
-// Image upload configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "uploads/");
@@ -15,7 +14,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Routes
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 router.post("/", upload.single("image"), createProduct);

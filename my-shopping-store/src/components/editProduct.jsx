@@ -15,7 +15,6 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Pencil } from "lucide-react";
 
-// Hidden input style for image upload
 const VisuallyHiddenInput = styled("input")({
     clip: "rect(0 0 0 0)",
     clipPath: "inset(50%)",
@@ -28,7 +27,6 @@ const VisuallyHiddenInput = styled("input")({
     width: 1,
 });
 
-// Yup validation schema for product
 const validationSchema = Yup.object({
     name: Yup.string().required("Product Name is required!"),
     description: Yup.string().required("Product Description is required!"),
@@ -45,7 +43,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
     const [productImage, setProductImage] = useState(null);
     const [previewImage, setPreviewImage] = useState(initialData?.image || null);
 
-    // Open and close dialog
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -56,7 +53,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
         setPreviewImage(initialData?.image || null);
     };
 
-    // Handle image change
     const handleImageChange = (event, setFieldValue) => {
         const file = event.target.files[0];
         if (file) {
@@ -66,14 +62,12 @@ const EditProduct = ({ initialData, onSubmit }) => {
         }
     };
 
-    // Helper function to format price with commas
     const formatPriceWithCommas = (value) => {
         if (!value) return "";
         const numericValue = value.replace(/,/g, "");
         return new Intl.NumberFormat("en-US").format(numericValue);
     };
 
-    // Update product
     const handleUpdateProduct = async (values) => {
         if (!initialData || !initialData._id) {
             console.error("Error: Product ID is missing.", initialData);
@@ -84,7 +78,7 @@ const EditProduct = ({ initialData, onSubmit }) => {
             const formData = new FormData();
             formData.append("name", values.name);
             formData.append("description", values.description);
-            formData.append("price", values.price.replace(/,/g, "")); // Remove commas
+            formData.append("price", values.price.replace(/,/g, "")); 
             if (values.image) {
                 formData.append("image", values.image);
             }
@@ -92,7 +86,7 @@ const EditProduct = ({ initialData, onSubmit }) => {
             await axios.put(`http://localhost:5000/api/products/${initialData._id}`, formData);
 
             handleClose();
-            onSubmit(); // Refresh or callback after successful update
+            onSubmit(); 
         } catch (error) {
             console.error("Error updating product:", error);
         }
@@ -127,7 +121,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
                     >
                         {({ setFieldValue, values, errors, touched }) => (
                             <Form className="space-y-4">
-                                {/* Product Name */}
                                 <Field
                                     as={TextField}
                                     label="Product Name"
@@ -139,7 +132,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
                                     helperText={touched.name && errors.name}
                                 />
 
-                                {/* Product Description */}
                                 <Field
                                     as={TextField}
                                     label="Product Description"
@@ -152,7 +144,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
                                     helperText={touched.description && errors.description}
                                 />
 
-                                {/* Product Price (with comma formatting) */}
                                 <TextField
                                     label="Product Price"
                                     name="price"
@@ -168,7 +159,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
                                     helperText={touched.price && errors.price}
                                 />
 
-                                {/* Upload Image */}
                                 <div className="bg-white rounded-lg p-3 shadow-sm">
                                     <label className="block font-semibold mb-2 text-gray-700">
                                         Upload Product Image
@@ -206,7 +196,6 @@ const EditProduct = ({ initialData, onSubmit }) => {
                                     )}
                                 </div>
 
-                                {/* Dialog Actions */}
                                 <DialogActions className="rounded-b-xl flex justify-between px-4 pb-4">
                                     <Tooltip title="Cancel" arrow placement="bottom">
                                         <Button onClick={handleClose} color="error" variant="contained">
