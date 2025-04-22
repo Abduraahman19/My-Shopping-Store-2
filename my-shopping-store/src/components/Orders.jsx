@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   FiPackage, FiTruck, FiCreditCard, FiUser,
-  FiCalendar, FiDollarSign, FiEdit, FiChevronDown, FiFile
+  FiCalendar, FiEdit, FiChevronDown, FiFile
 } from 'react-icons/fi';
 import { FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -179,34 +179,6 @@ const Orders = () => {
 
     const renderDetails = () => {
       switch (payment.method) {
-        case 'Credit Card':
-        case 'Debit Card':
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-gray-600">Card Holder</p>
-                <p className="text-gray-800">{payment.details?.cardHolderName || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Card Number</p>
-                <p className="text-gray-800">
-                  {payment.details?.cardNumber ? `•••• •••• •••• ${payment.details.cardNumber.slice(-4)}` : 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Expiry Date</p>
-                <p className="text-gray-800">{payment.details?.expiryDate || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">CVV</p>
-                <p className="text-gray-800">{payment.details?.cvv ? '•••' : 'N/A'}</p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="font-medium text-gray-600">Billing Address</p>
-                <p className="text-gray-800">{payment.details?.billingAddress || 'N/A'}</p>
-              </div>
-            </div>
-          );
         case 'Easypaisa':
         case 'Jazz Cash':
           return (

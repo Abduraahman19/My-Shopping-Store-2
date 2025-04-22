@@ -24,20 +24,18 @@ app.use(express.urlencoded({ extended: true }));
 // Stripe Checkout Route
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
-    const { products } = req.body;
-    
+    const { products, customer_email, success_url, cancel_url } = req.body;
+
     if (!products || !Array.isArray(products)) {
       return res.status(400).json({ error: "Invalid products data" });
     }
 
     const lineItems = products.map(item => {
-      // Include all product details in metadata
       const metadata = {
         product_id: item.product.id,
         description: item.product.description || '',
         brand: item.product.brand || '',
         category: item.product.category || ''
-        // Add any other fields you want to preserve
       };
 
       return {
@@ -46,7 +44,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
           product_data: {
             name: item.product.title,
             description: item.product.description?.substring(0, 200) || '',
-            metadata: metadata // All extra details stored here
+            metadata: metadata
           },
           unit_amount: Math.round(item.product.price * 100),
         },
@@ -58,8 +56,16 @@ app.post("/api/create-checkout-session", async (req, res) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${req.body.success_url}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: req.body.cancel_url,
+      success_url: `${success_url}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancel_url,
+
+      // ✅ Additional fields added below
+      customer_email: customer_email || undefined, // if provided, else optional
+      billing_address_collection: 'required',
+      shipping_address_collection: {
+        allowed_countries: ['PK', 'US', 'CA'], // Add or remove as needed
+      },
+      customer_creation: 'always', // creates customer to capture name/email
     });
 
     res.json({ id: session.id });
@@ -71,6 +77,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
     });
   }
 });
+
 
 // Payment Verification Route
 app.get("/api/verify-payment", async (req, res) => {
@@ -104,8 +111,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected Successfully"))
-  .catch(err => console.error("❌ MongoDB Connection Error:", err));
+  .then(() => console.log("✅ My Shopping Store MongoDB Connected Successfully"))
+  .catch(err => console.error("❌ My Shopping Store MongoDB Connection Error:", err));
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date() });
@@ -118,6 +125,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔗 http://localhost:${PORT}`);
+  console.log(`🚀 My Shopping Store Server running on port ${PORT}`);
+  console.log(`🔗 My Shopping Store http://localhost:${PORT}`);
 });
