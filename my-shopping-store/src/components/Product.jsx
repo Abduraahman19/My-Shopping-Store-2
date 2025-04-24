@@ -100,11 +100,11 @@ const AddProduct = () => {
         <div>
             <Tooltip title="Add New Product" arrow placement="right">
                 <div
-                    className="p-2 flex items-center gap-2 font-semibold hover:bg-white/20 rounded cursor-pointer"
+                    className="p-2 flex items-center gap-2 rounded-lg font-semibold hover:bg-gray-200/15 cursor-pointer"
                     onClick={handleClickOpen}
                 >
                     <AiOutlinePlus className="text-2xl text-green-400" />
-                    <span className="text-lg">Add New Product</span>
+                    <span className="text-lg text-white">Add New Product</span>
                 </div>
             </Tooltip>
             <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
