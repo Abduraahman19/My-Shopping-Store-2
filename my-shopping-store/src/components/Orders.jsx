@@ -305,15 +305,12 @@ const Orders = () => {
                         </button>
 
                         <motion.div
-                          initial={{ scale: 0.95 }}
-                          animate={{ scale: 1 }}
-                          className="overflow-hidden rounded-xl shadow-2xl"
-                          onClick={(e) => e.stopPropagation()}
+                         
                         >
                           <img
                             src={`http://localhost:5000/${payment.details.paymentProof}`}
                             alt="Payment proof"
-                            className="w-full h-auto max-h-[80vh] object-contain"
+                            className="w-full h-auto max-h-[80vh] rounded-lg object-contain"
                           />
                         </motion.div>
                       </div>
@@ -324,7 +321,7 @@ const Orders = () => {
                     className="relative group cursor-pointer w-fit mx-auto"
                     onClick={() => setIsImageModalOpen(true)}
                   >
-                    <div className="relative overflow-hidden rounded-2xl border-2 border-gray-200 group-hover:border-cyan-400 transition-all duration-300">
+                    <div className="relative overflow-hidden rounded-2xl border-2 border-gray-200 group-hover:border-indigo-400 transition-all duration-300">
                       <img
                         src={`http://localhost:5000/${payment.details.paymentProof}`}
                         alt="Payment proof thumbnail"
@@ -334,7 +331,7 @@ const Orders = () => {
                         <div className="bg-white/90 p-3 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 text-cyan-600"
+                            className="h-6 w-6 text-indigo-600"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -392,7 +389,7 @@ const Orders = () => {
         className="flex justify-between items-center mb-8"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center">
-          <FiPackage className="mr-3 text-cyan-600" />
+          <FiPackage className="mr-3 text-indigo-600" />
           Order Management
         </h1>
         <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -402,14 +399,14 @@ const Orders = () => {
 
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center">
-          <label className="mr-2 text-sm font-medium text-gray-700">Status:</label>
+          <label className="mr-2 text-lg font-bold text-gray-700">Status:</label>
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="border rounded p-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+            className="border rounded p-2 text-gray-700 font-semibold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           >
             <option value="">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -420,14 +417,14 @@ const Orders = () => {
         </div>
 
         <div className="flex items-center">
-          <label className="mr-2 text-sm font-medium text-gray-700">Payment:</label>
+          <label className="mr-2 text-lg font-bold text-gray-700">Payment:</label>
           <select
             value={paymentStatusFilter}
             onChange={(e) => {
               setPaymentStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="border rounded p-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+            className="border rounded p-2 text-gray-700 font-semibold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           >
             <option value="">All Payments</option>
             <option value="Paid">Paid</option>
@@ -457,7 +454,7 @@ const Orders = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${expandedOrder === order._id ? 'ring-2 ring-cyan-500' : 'hover:shadow-lg'
+                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${expandedOrder === order._id ? 'ring-2 ring-indigo-500' : 'hover:shadow-lg'
                   }`}
               >
                 <motion.div
@@ -469,7 +466,7 @@ const Orders = () => {
                     <h1 className="bg-black/15 inline-flex items-center justify-center w-7 h-7 font-bold aspect-square rounded-full text-gray-700">
                       {orderNumber}
                     </h1>
-                    <div className="p-3 rounded-full bg-cyan-100 text-cyan-600">
+                    <div className="p-3 rounded-full bg-indigo-100 text-indigo-600">
                       <FiPackage className="text-xl" />
                     </div>
                     <div>
@@ -537,16 +534,16 @@ const Orders = () => {
                               <FiUser className="text-gray-500 mr-2" />
                               <h3 className="font-semibold text-gray-700">Customer Information</h3>
                             </div>
-                            <div className="space-y-2 text-sm">
-                              <p><span className="font-medium text-gray-600">Name:</span> {order.customer.name}</p>
-                              <p><span className="font-medium text-gray-600">Email:</span> {order.customer.email}</p>
-                              <p><span className="font-medium text-gray-600">Phone:</span> {order.customer.phone}</p>
+                            <div className="space-y-2 text-sm text-gray-800 font-semibold">
+                              <p><span className="font-bold text-gray-600">Name:</span> {order.customer.name}</p>
+                              <p><span className="font-bold text-gray-600">Email:</span> {order.customer.email}</p>
+                              <p><span className="font-bold text-gray-600">Phone:</span> {order.customer.phone}</p>
                               <p>
-                                <span className="font-medium text-gray-600">Address:</span> {order.customer.address}
+                                <span className="font-bold text-gray-600">Address:</span> {order.customer.address}
                               </p>
-                              <p><span className="font-medium text-gray-600">City:</span> <span className='uppercase'>{order.customer.city}</span></p>
-                              <p><span className="font-medium text-gray-600">Country:</span><span className='uppercase'> {order.customer.country}</span></p>
-                              <p><span className="font-medium text-gray-600">ZipCode:</span> {order.customer.zipCode}</p>
+                              <p><span className="font-bold text-gray-600">City:</span> <span className='uppercase'>{order.customer.city}</span></p>
+                              <p><span className="font-bold text-gray-600">Country:</span><span className='uppercase'> {order.customer.country}</span></p>
+                              <p><span className="font-bold text-gray-600">ZipCode:</span> {order.customer.zipCode}</p>
                             </div>
                           </motion.div>
 
@@ -563,7 +560,7 @@ const Orders = () => {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <div className="flex items-center justify-between">
-                                  <p className="font-medium text-gray-600">Shipping</p>
+                                  <p className="font-bold text-gray-600">Shipping</p>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -577,13 +574,13 @@ const Orders = () => {
                                     <FiEdit size={14} />
                                   </button>
                                 </div>
-                                <p className="flex items-center mt-1">
-                                  <FiTruck className="mr-1" /> {order.shippingMethod}
+                                <p className="flex items-center text-gray-800 mt-1">
+                                  <FiTruck className="mr-1 text-cyan-600" /> {order.shippingMethod}
                                 </p>
                               </div>
                               <div>
                                 <div className="flex items-center justify-between">
-                                  <p className="font-medium text-gray-600">Payment</p>
+                                  <p className="font-bold text-gray-600">Payment</p>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -603,7 +600,7 @@ const Orders = () => {
                                     <select
                                       value={order.paymentStatus}
                                       onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
-                                      className="border rounded p-1 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+                                      className="border text-gray-800 rounded p-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                     >
                                       <option value="Paid">Paid</option>
                                       <option value="Pending">Pending</option>
@@ -617,18 +614,18 @@ const Orders = () => {
                                     </button>
                                   </motion.div>
                                 ) : (
-                                  <p className="flex items-center mt-1">
+                                  <p className="flex items-center text-gray-800 mt-1">
                                     <FiCreditCard className="mr-1" /> {order.paymentStatus}
                                   </p>
                                 )}
                               </div>
                               <div>
-                                <p className="font-medium text-gray-600">Payment Method</p>
-                                <p className="mt-1">{order.paymentMethod}</p>
+                                <p className="font-bold text-gray-600">Payment Method</p>
+                                <p className="mt-1 text-gray-800">{order.paymentMethod}</p>
                               </div>
                               <div>
                                 <div className="flex items-center justify-between">
-                                  <p className="font-medium text-gray-600">Status</p>
+                                  <p className="font-bold text-gray-600">Status</p>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -648,7 +645,7 @@ const Orders = () => {
                                     <select
                                       value={order.status}
                                       onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                                      className="border rounded p-1 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+                                      className="border rounded text-gray-800 p-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                     >
                                       <option value="Pending">Pending</option>
                                       <option value="Processing">Processing</option>
@@ -664,7 +661,7 @@ const Orders = () => {
                                   </motion.div>
                                 ) : (
                                   <p className="flex items-center mt-1">
-                                    {getStatusIcon(order.status)} <span className="ml-1">{order.status}</span>
+                                    {getStatusIcon(order.status)} <span className="ml-1 text-gray-800">{order.status}</span>
                                   </p>
                                 )}
                               </div>
@@ -744,12 +741,12 @@ const Orders = () => {
                         >
                           <div className="bg-cyan-50 rounded-2xl shadow-lg p-4 w-full md:w-1/3">
                             <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
-                              <span className="font-medium text-gray-600">Subtotal</span>
-                              <span className="font-medium">Rs.{order.grandTotal.toLocaleString()}</span>
+                              <span className="font-bold text-gray-600">Subtotal</span>
+                              <span className="font-medium text-gray-800">Rs.{order.grandTotal.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
-                              <span className="font-medium text-gray-600">Shipping</span>
-                              <span className="font-medium">Rs.0</span>
+                              <span className="font-bold text-gray-600">Shipping</span>
+                              <span className="font-medium text-gray-800">Rs.0</span>
                             </div>
                             <div className="flex justify-between items-center pt-2">
                               <span className="font-bold text-lg text-gray-800">Grand Total</span>
@@ -774,7 +771,7 @@ const Orders = () => {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 border rounded-md text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 border text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
             >
               Previous
             </button>
@@ -806,7 +803,7 @@ const Orders = () => {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 border rounded-md text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 border text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
             >
               Next
             </button>

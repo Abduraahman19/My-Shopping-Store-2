@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiPackage, FiSettings } from "react-icons/fi";
+import { FiLogOut, FiPackage} from "react-icons/fi";
 import { TbCategoryPlus } from "react-icons/tb";
 import { AiOutlineProduct, AiOutlineDashboard } from "react-icons/ai";
 import { MdKeyboardArrowUp, MdKeyboardArrowDown, MdNotifications } from "react-icons/md";
@@ -430,21 +430,6 @@ const Sidebar = ({
             <FiPackage className="text-2xl text-white" />
             {!isCollapsed && (
               <h1 className="text-lg text-white font-bold">Orders</h1>
-            )}
-          </motion.button>
-        </Tooltip>
-
-        <Tooltip title="Settings" arrow placement="right">
-          <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
-            whileTap={{ scale: 0.98 }}
-            className="cursor-pointer gap-3 p-2 rounded-lg flex items-center w-full mt-4"
-            style={{ color: COLORS.primary }}
-            aria-label="Settings"
-          >
-            <FiSettings className="text-2xl text-white" />
-            {!isCollapsed && (
-              <h1 className="text-lg text-white font-bold">Settings</h1>
             )}
           </motion.button>
         </Tooltip>

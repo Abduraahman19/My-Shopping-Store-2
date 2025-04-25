@@ -1,82 +1,209 @@
-import React, { useState } from "react";
-import { Button, Dialog, DialogContent, DialogActions } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineClose } from "react-icons/ai";
 import { FaKeyboard } from "react-icons/fa";
-import Tooltip from "@mui/material/Tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Button,
+  Tooltip,
+  Typography,
+  IconButton
+} from "@mui/material";
+
+const COLORS = {
+  primary: "#4f46e5",
+  primaryLight: "#ffffff",
+  primaryDark: "#4338ca",
+  secondary: "#10b981",
+  accent: "#f59e0b",
+  background: "#f8fafc",
+  card: "#4f46e5",
+  textPrimary: "#ffffff",
+  textSecondary: "#64748b",
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+  info: "#3b82f6"
+};
 
 const Shortcut = () => {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-    return (
-        <div>
-            <Tooltip title="Shortcuts" arrow placement="bottom">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => setOpen(true)}
-                    className="flex items-center text-base gap-2 font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
-                >
+  // Animation variants
+  const modalVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", damping: 25, stiffness: 500 }
+    },
+    exit: { opacity: 0, y: 20 }
+  };
 
-                    <FaKeyboard className="text-xl" /> Shortcuts
-                </Button>
-            </Tooltip>
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: i * 0.1
+      }
+    })
+  };
 
-            <Dialog
-                open={open}
-                onClose={() => setOpen(false)}
-                maxWidth="sm"
-                fullWidth
-                className="rounded-lg"
+  // Keyboard shortcut to open the dialog
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && open) {
+        e.preventDefault();
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  return (
+    <>
+      {/* Shortcut Button */}
+      <Tooltip title="Shortcuts" arrow placement="bottom">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 p-2 rounded-lg cursor-pointer"
+          style={{
+            backgroundColor: COLORS.primary,
+            color: COLORS.primaryLight
+          }}
+        >
+          <FaKeyboard className="text-xl" />
+          <span className="font-medium">Shortcuts</span>
+        </motion.div>
+      </Tooltip>
+
+      {/* Shortcut Dialog */}
+      <AnimatePresence>
+        {open && (
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            maxWidth="sm"
+            fullWidth
+            slotProps={{
+              paper: {
+                sx: {
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  background: "white",
+                  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+                  maxWidth: "600px"
+                }
+              }
+            }}
+          >
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={modalVariants}
             >
-                <div className="bg-cyan-600/70 text-white pl-5 flex justify-between items-center">
-                    <h2 className="text-2xl text font-bold">Keyboard Shortcuts</h2>
-                    <div onClick={() => setOpen(false)} className="hover:bg-red-600 cursor-pointer transition duration-300 h-12 w-14 flex items-center justify-center ">
-                    <AiOutlineClose className="text-2xl "/>
-                    </div>
+              {/* Header */}
+              <div
+                style={{
+                  background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
+                  padding: "16px 24px",
+                  position: "relative"
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    color: COLORS.primaryLight,
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
+                >
+                  Keyboard Shortcuts
+                </Typography>
+                <IconButton
+                  onClick={() => setOpen(false)}
+                  sx={{
+                    position: "absolute",
+                    right: "16px",
+                    top: "16px",
+                    color: COLORS.primaryLight
+                  }}
+                >
+                  <AiOutlineClose />
+                </IconButton>
+              </div>
+
+              {/* Content */}
+              <DialogContent sx={{ p: 3, bgcolor: COLORS.background }}>
+                <div className="space-y-4">
+                  {[
+                    { shortcut: "Ctrl + L", description: "Logout" },
+                    { shortcut: "Ctrl + Shift + C", description: "Open Add Category Form" },
+                    { shortcut: "Ctrl + Shift + A", description: "Open Add SubCategory Form" },
+                    { shortcut: "Ctrl + Shift + S", description: "Open SearchBar" },
+                    { shortcut: "Alt + Shift + P", description: "Open Add Products Form" },
+                    { shortcut: "Alt + O", description: "Open Sidebar" },
+                    { shortcut: "Alt + C", description: "Close Sidebar" }
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      custom={i}
+                      variants={itemVariants}
+                      className="flex items-center gap-4"
+                    >
+                      <span
+                        className="px-3 py-2 rounded-md font-bold"
+                        style={{
+                          backgroundColor: `${COLORS.primary}20`,
+                          color: COLORS.primaryDark,
+                          minWidth: "160px",
+                          textAlign: "center",
+                          border: `1px solid ${COLORS.primary}`
+                        }}
+                      >
+                        {item.shortcut}
+                      </span>
+                      <span className="text-gray-700 font-medium">
+                        {item.description}
+                      </span>
+                    </motion.div>
+                  ))}
                 </div>
+              </DialogContent>
 
-
-                <DialogContent className="bg-gray-50 p-5 text-gray-800">
-                    <div className="space-y-3">
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Ctrl + L</strong> <span className="font-semibold">- Logout</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Ctrl + Shift + C</strong> <span className="font-semibold">- Open Add Category Form</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Ctrl + Shift + A</strong>  <span className="font-semibold">- Open Add SubCategory Form</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Ctrl + Shift + S</strong>  <span className="font-semibold">- Open SearchBar</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Alt + Shift + P</strong>  <span className="font-semibold">- Open Add Products Form</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Alt + O</strong>  <span className="font-semibold">- Open Sidebar</span>
-                        </p>
-                        <p className="text-lg">
-                            <strong className="text-cyan-600 font-bold text-xl">Alt + C</strong>  <span className="font-semibold">- Close Sidebar</span>
-                        </p>
-                    </div>
-                </DialogContent>
-
-                <DialogActions className="bg-gray-100 px-5 py-3">
-                    <Tooltip title="Close" arrow placement="top">
-                        <Button
-                            onClick={() => setOpen(false)}
-                            color="error"
-                            variant="contained"
-                            className="px-4 py-2 text-base font-semibold shadow-md hover:bg-red-600 transition"
-                        >
-                            Close
-                        </Button>
-                    </Tooltip>
-                </DialogActions>
-            </Dialog>
-        </div>
-    );
+              {/* Actions */}
+              <DialogActions sx={{ bgcolor: COLORS.background, px: 3, py: 2 }}>
+                <motion.div variants={itemVariants}>
+                  <Button
+                    onClick={() => setOpen(false)}
+                    sx={{
+                      backgroundColor: COLORS.danger,
+                      color: COLORS.primaryLight,
+                      "&:hover": {
+                        backgroundColor: `${COLORS.danger}90`
+                      }
+                    }}
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              </DialogActions>
+            </motion.div>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </>
+  );
 };
 
 export default Shortcut;

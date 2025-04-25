@@ -1,212 +1,439 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-    Button,
-    Dialog,
-    DialogContent,
-    TextField,
-    DialogActions,
-    Tooltip,
-} from "@mui/material";
-import { AiOutlinePlus } from "react-icons/ai";
-import { styled } from "@mui/material/styles";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { AiOutlinePlus } from "react-icons/ai";
+import { FiX, FiUpload } from "react-icons/fi";
+import {
+  Dialog,
+  DialogContent,
+  TextField,
+  Button,
+  Tooltip,
+  CircularProgress,
+  IconButton,
+  Typography
+} from "@mui/material";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
-const VisuallyHiddenInput = styled("input")({
-    clip: "rect(0 0 0 0)",
-    clipPath: "inset(50%)",
-    height: 1,
-    overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    whiteSpace: "nowrap",
-    width: 1,
-});
+const COLORS = {
+  primary: "#4f46e5",
+  primaryLight: "#ffffff",
+  primaryDark: "#4338ca",
+  secondary: "#10b981",
+  accent: "#f59e0b",
+  background: "#f8fafc",
+  card: "#4f46e5",
+  textPrimary: "#ffffff",
+  textSecondary: "#64748b",
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+  info: "#3b82f6"
+};
 
 const validationSchema = Yup.object({
-    name: Yup.string().required("Product Name is required!"),
-    description: Yup.string().required("Product Description is required!"),
-    price: Yup.string()
-        .required("Product Price is required!")
-        .test("is-positive", "Price must be a positive number", (value) => {
-            const numericValue = Number(value.replace(/,/g, ""));
-            return numericValue > 0;
-        }),
+  name: Yup.string().required("Product name is required"),
+  description: Yup.string().required("Description is required"),
+  price: Yup.string()
+    .required("Price is required")
+    .test("is-positive", "Price must be positive", (value) => {
+      const numericValue = Number(value.replace(/,/g, ""));
+      return numericValue > 0;
+    }),
 });
 
-const AddProduct = () => {
-    const [open, setOpen] = useState(false);
-    const [productImage, setProductImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(null);
+const AddProduct = ({ onProductAdded }) => {
+  const [open, setOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-    const handleClickOpen = () => setOpen(true);
+  // Animation variants
+  const modalVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", damping: 25, stiffness: 500 }
+    },
+    exit: { opacity: 0, y: 20 }
+  };
 
-    const handleClose = (resetForm) => {
-        setOpen(false);
-        setProductImage(null);
-        setPreviewImage(null);
-        resetForm(); 
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  };
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setPreviewImage(null);
+    setError(null);
+  };
+
+  const handleImageChange = (event, setFieldValue) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPreviewImage(URL.createObjectURL(file));
+      setFieldValue("image", file);
+    }
+  };
+
+  const formatPrice = (value) => {
+    if (!value) return "";
+    const numericValue = value.replace(/,/g, "");
+    return new Intl.NumberFormat("en-US").format(numericValue);
+  };
+
+  const handleSubmit = async (values, { resetForm }) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
+      formData.append("price", values.price.replace(/,/g, ""));
+      if (values.image) formData.append("image", values.image);
+
+      await axios.post("http://localhost:5000/api/products", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      resetForm();
+      handleClose();
+      if (onProductAdded) onProductAdded();
+    } catch (err) {
+      console.error("Error adding product:", err);
+      setError(err.response?.data?.message || "Failed to add product");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        handleOpen();
+      }
+      if (e.key === "Escape" && open) {
+        e.preventDefault();
+        handleClose();
+      }
     };
 
-    const handleImageChange = (event, setFieldValue) => {
-        const file = event.target.files[0];
-        if (file) {
-            setProductImage(file);
-            setPreviewImage(URL.createObjectURL(file));
-            setFieldValue("image", file);
-        }
-    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
-    const handleSubmit = async (values, { resetForm }) => {
-        try {
-            const formData = new FormData();
-            formData.append("name", values.name);
-            formData.append("description", values.description);
-            formData.append("price", values.price.replace(/,/g, "")); 
-            if (values.image) formData.append("image", values.image);
+  return (
+    <>
+      {/* Add Product Button */}
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleOpen}
+          className="flex items-center gap-2 p-2 rounded-lg cursor-pointer"
+          style={{
+            backgroundColor: COLORS.primary,
+            color: COLORS.primaryLight
+          }}
+        >
+          <AiOutlinePlus className="text-xl" />
+          <span className="font-medium">Add Product</span>
+        </motion.div>
 
-            await axios.post("http://localhost:5000/api/products", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-
-            handleClose(resetForm);
-            window.location.reload();
-        } catch (error) {
-            console.error("Error adding product:", error.response?.data || error.message);
-        }
-    };
-
-    const handleKeyPress = useCallback((event) => {
-        if (event.altKey && event.shiftKey && event.key.toLowerCase() === "p") {
-            event.preventDefault();
-            handleClickOpen();
-        }
-    }, []);
-
-    useEffect(() => {
-        document.addEventListener("keydown", handleKeyPress);
-        return () => document.removeEventListener("keydown", handleKeyPress);
-    }, [handleKeyPress]);
-
-    const formatPriceWithCommas = (value) => {
-        if (!value) return "";
-        const numericValue = value.replace(/,/g, ""); 
-        return new Intl.NumberFormat("en-US").format(numericValue);
-    };
-
-    return (
-        <div>
-            <Tooltip title="Add New Product" arrow placement="right">
-                <div
-                    className="p-2 flex items-center gap-2 rounded-lg font-semibold hover:bg-gray-200/15 cursor-pointer"
-                    onClick={handleClickOpen}
+      {/* Add Product Dialog */}
+      <AnimatePresence>
+        {open && (
+          <Dialog
+          open={open}
+          onClose={handleClose}
+          maxWidth="md" // Changed from "sm" to "md" for a wider dialog
+          fullWidth={true} // This makes the dialog take the full width allowed by maxWidth
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "12px",
+                overflow: "hidden",
+                background: "white",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+                width: "100%", // Ensures it takes full width
+                maxWidth: "500px" // You can set a specific max width if needed
+              }
+            }
+          }}
+        >
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={modalVariants}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
+                  padding: "16px 24px",
+                  position: "relative"
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    color: COLORS.primaryLight,
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
                 >
-                    <AiOutlinePlus className="text-2xl text-green-400" />
-                    <span className="text-lg text-white">Add New Product</span>
-                </div>
-            </Tooltip>
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
-                <div className="bg-cyan-600 py-4 text-white text-2xl font-bold text-center">
-                    Add New Product
-                </div>
-                <DialogContent className="bg-black/10">
-                    <Formik
-                        initialValues={{ name: "", description: "", price: "", image: null }}
-                        validationSchema={validationSchema}
-                        onSubmit={handleSubmit}
-                    >
-                        {({ setFieldValue, values, resetForm }) => (
-                            <Form className="space-y-4">
-                                <div>
-                                    <Field
-                                        as={TextField}
-                                        label="Product Name"
-                                        name="name"
-                                        variant="outlined"
-                                        fullWidth
-                                        required
-                                    />
-                                    <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
-                                </div>
+                  Add New Product
+                </Typography>
+                <IconButton
+                  onClick={handleClose}
+                  sx={{
+                    position: "absolute",
+                    right: "16px",
+                    top: "16px",
+                    color: COLORS.primaryLight
+                  }}
+                >
+                  <FiX />
+                </IconButton>
+              </div>
 
-                                <div>
-                                    <Field
-                                        as={TextField}
-                                        label="Product Description"
-                                        name="description"
-                                        variant="outlined"
-                                        fullWidth
-                                        multiline
-                                        rows={3}
-                                        required
-                                    />
-                                    <ErrorMessage
-                                        name="description"
-                                        component="div"
-                                        className="text-red-500 text-sm"
-                                    />
-                                </div>
+              {/* Content */}
+              <DialogContent sx={{ p: 3 }}>
+                <Formik
+                  initialValues={{
+                    name: "",
+                    description: "",
+                    price: "",
+                    image: null
+                  }}
+                  validationSchema={validationSchema}
+                  onSubmit={handleSubmit}
+                >
+                  {({ setFieldValue, values }) => (
+                    <Form className="space-y-4">
+                      {/* Name Field */}
+                      <motion.div variants={itemVariants}>
+                        <Field
+                          as={TextField}
+                          name="name"
+                          label="Product Name"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            mb: 1,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: COLORS.primary
+                              },
+                              "&:hover fieldset": {
+                                borderColor: COLORS.primaryDark
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: COLORS.primaryDark,
+                                borderWidth: "2px"
+                              }
+                            }
+                          }}
+                        />
+                        <ErrorMessage
+                          name="name"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </motion.div>
 
-                                <div>
-                                    <TextField
-                                        label="Price"
-                                        name="price"
-                                        variant="outlined"
-                                        fullWidth
-                                        required
-                                        value={values.price}
-                                        onChange={(e) => {
-                                            const formattedValue = formatPriceWithCommas(e.target.value);
-                                            setFieldValue("price", formattedValue);
-                                        }}
-                                    />
-                                    <ErrorMessage name="price" component="div" className="text-red-500 text-sm" />
-                                </div>
+                      {/* Description Field */}
+                      <motion.div variants={itemVariants}>
+                        <Field
+                          as={TextField}
+                          name="description"
+                          label="Description"
+                          variant="outlined"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          sx={{
+                            mb: 1,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: COLORS.primary
+                              },
+                              "&:hover fieldset": {
+                                borderColor: COLORS.primaryDark
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: COLORS.primaryDark,
+                                borderWidth: "2px"
+                              }
+                            }
+                          }}
+                        />
+                        <ErrorMessage
+                          name="description"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </motion.div>
 
-                                <div className="bg-white rounded-lg p-3 shadow-sm">
-                                    <label className="block font-semibold mb-2 text-gray-700">
-                                        Upload Product Image
-                                    </label>
-                                    <Tooltip title="Upload Image" arrow placement="bottom">
-                                        <Button component="label" variant="contained">
-                                            Upload Image
-                                            <VisuallyHiddenInput
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={(e) => handleImageChange(e, setFieldValue)}
-                                            />
-                                        </Button>
-                                    </Tooltip>
-                                    {previewImage && (
-                                        <img
-                                            src={previewImage}
-                                            alt="Preview"
-                                            className="w-32 h-32 object-cover rounded-lg border mt-2"
-                                        />
-                                    )}
-                                </div>
+                      {/* Price Field */}
+                      <motion.div variants={itemVariants}>
+                        <TextField
+                          name="price"
+                          label="Price"
+                          variant="outlined"
+                          fullWidth
+                          value={values.price}
+                          onChange={(e) => {
+                            const formattedValue = formatPrice(e.target.value);
+                            setFieldValue("price", formattedValue);
+                          }}
+                          sx={{
+                            mb: 1,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: COLORS.primary
+                              },
+                              "&:hover fieldset": {
+                                borderColor: COLORS.primaryDark
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: COLORS.primaryDark,
+                                borderWidth: "2px"
+                              }
+                            }
+                          }}
+                        />
+                        <ErrorMessage
+                          name="price"
+                          component="div"
+                          className="text-red-500 text-sm"
+                        />
+                      </motion.div>
 
-                                <DialogActions>
-                                    <Tooltip title="Cancel" arrow placement="bottom">
-                                        <Button onClick={() => handleClose(resetForm)} color="error" variant="contained">
-                                            Cancel
-                                        </Button>
-                                    </Tooltip>
-                                    <Tooltip title="Add Product" arrow placement="bottom">
-                                        <Button type="submit" color="primary" variant="contained">
-                                            Add Product
-                                        </Button>
-                                    </Tooltip>
-                                </DialogActions>
-                            </Form>
-                        )}
-                    </Formik>
-                </DialogContent>
-            </Dialog>
-        </div>
-    );
+                      {/* Image Upload */}
+                      <motion.div variants={itemVariants}>
+                        <div
+                          style={{
+                            border: `2px dashed ${COLORS.primary}`,
+                            borderRadius: "8px",
+                            padding: "16px",
+                            textAlign: "center",
+                            backgroundColor: `${COLORS.primary}08`
+                          }}
+                        >
+                          <label htmlFor="image-upload">
+                            <input
+                              id="image-upload"
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => handleImageChange(e, setFieldValue)}
+                            />
+                            <Button
+                              component="span"
+                              startIcon={<FiUpload />}
+                              sx={{
+                                color: COLORS.primaryDark,
+                                borderColor: COLORS.primary,
+                                "&:hover": {
+                                  backgroundColor: `${COLORS.primary}10`,
+                                  borderColor: COLORS.primaryDark
+                                }
+                              }}
+                              variant="outlined"
+                            >
+                              Upload Image
+                            </Button>
+                          </label>
+                          {previewImage && (
+                            <motion.img
+                              src={previewImage}
+                              alt="Preview"
+                              style={{
+                                width: "100px",
+                                height: "100px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                marginTop: "16px",
+                                border: `2px solid ${COLORS.primary}`
+                              }}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            />
+                          )}
+                        </div>
+                      </motion.div>
+
+                      {/* Error Message */}
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-red-500 text-center"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+
+                      {/* Actions */}
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex justify-end gap-3 mt-4"
+                      >
+                        <Button
+                          onClick={handleClose}
+                          sx={{
+                            backgroundColor: COLORS.danger,
+                            color: COLORS.primaryLight,
+                            "&:hover": {
+                              backgroundColor: `${COLORS.danger}90`
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          sx={{
+                            backgroundColor: COLORS.success,
+                            color: COLORS.primaryLight,
+                            "&:hover": {
+                              backgroundColor: `${COLORS.success}90`
+                            },
+                            "&:disabled": {
+                              backgroundColor: `${COLORS.textSecondary}60`
+                            }
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <CircularProgress size={24} sx={{ color: COLORS.primaryLight }} />
+                          ) : (
+                            "Add Product"
+                          )}
+                        </Button>
+                      </motion.div>
+                    </Form>
+                  )}
+                </Formik>
+              </DialogContent>
+            </motion.div>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </>
+  );
 };
 
 export default AddProduct;

@@ -1,171 +1,405 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-    Button,
-    Dialog,
-    DialogContent,
-    TextField,
-    DialogActions,
-    Typography,
-    Tooltip
-} from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import { styled } from "@mui/material/styles";
 import axios from "axios";
-import { Formik, Form, Field } from "formik";
+import { motion, AnimatePresence } from "framer-motion";
+import { AiOutlinePlus, AiOutlineClose } from "react-icons/ai";
+import { FiUpload } from "react-icons/fi";
+import {
+  Dialog,
+  DialogContent,
+  TextField,
+  Button,
+  Tooltip,
+  CircularProgress,
+  IconButton,
+  Typography
+} from "@mui/material";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
-const VisuallyHiddenInput = styled("input")({
-    clip: "rect(0 0 0 0)",
-    clipPath: "inset(50%)",
-    height: 1,
-    overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    whiteSpace: "nowrap",
-    width: 1,
-});
+const COLORS = {
+  primary: "#4f46e5",
+  primaryLight: "#ffffff",
+  primaryDark: "#4338ca",
+  secondary: "#10b981",
+  accent: "#f59e0b",
+  background: "#f8fafc",
+  card: "#4f46e5",
+  textPrimary: "#ffffff",
+  textSecondary: "#64748b",
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+  info: "#3b82f6"
+};
 
 const validationSchema = Yup.object({
-    name: Yup.string().required("Category Name is required!"),
-    description: Yup.string().required("Category Description is required!"),
+  name: Yup.string().required("Category name is required"),
+  description: Yup.string().required("Description is required"),
 });
 
-const Category = () => {
-    const [open, setOpen] = useState(false);
-    const [categoryImage, setCategoryImage] = useState(null);
-    const [previewImage, setPreviewImage] = useState(null);
+const Category = ({ onCategoryAdded }) => {
+  const [open, setOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-    const handleShortcut = useCallback((event) => {
-        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "c") {
-            event.preventDefault();
-            setOpen(true);
-        }
-    }, []);
+  // Animation variants
+  const modalVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", damping: 25, stiffness: 500 }
+    },
+    exit: { opacity: 0, y: 20 }
+  };
 
-    useEffect(() => {
-        window.addEventListener("keydown", handleShortcut);
-        return () => window.removeEventListener("keydown", handleShortcut);
-    }, [handleShortcut]);
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  };
 
-    const handleClickOpen = () => setOpen(true);
-    const handleClose = () => {
-        setOpen(false);
-        setCategoryImage(null);
-        setPreviewImage(null);
-    };
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setPreviewImage(null);
+    setError(null);
+  };
 
-    const handleImageChange = (event, setFieldValue) => {
-        const file = event.target.files[0];
-        if (file) {
-            setCategoryImage(file);
-            setPreviewImage(URL.createObjectURL(file));
-            setFieldValue("image", file);
-        }
-    };
+  const handleImageChange = (event, setFieldValue) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPreviewImage(URL.createObjectURL(file));
+      setFieldValue("image", file);
+    }
+  };
 
-    const handleSubmit = async (values, { resetForm }) => {
-        try {
-            const formData = new FormData();
-            formData.append("name", values.name);
-            formData.append("description", values.description);
-            if (values.image) formData.append("image", values.image);
+  // Keyboard shortcut
+  const handleShortcut = useCallback((event) => {
+    if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "c") {
+      event.preventDefault();
+      handleOpen();
+    }
+    if (event.key === "Escape" && open) {
+      event.preventDefault();
+      handleClose();
+    }
+  }, [open]);
 
-            console.log("Sending FormData:", {
-                name: values.name,
-                description: values.description,
-                image: values.image ? values.image.name : "No image",
-            });
+  useEffect(() => {
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [handleShortcut]);
 
-            const response = await axios.post("http://localhost:5000/api/categories", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+  const handleSubmit = async (values, { resetForm }) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("description", values.description);
+      if (values.image) formData.append("image", values.image);
 
-            console.log("Category Added:", response.data);
+      await axios.post("http://localhost:5000/api/categories", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
 
-            resetForm();
-            setCategoryImage(null);
-            setPreviewImage(null);
-            handleClose();
+      resetForm();
+      handleClose();
+      if (onCategoryAdded) onCategoryAdded();
+    } catch (err) {
+      console.error("Error adding category:", err);
+      setError(err.response?.data?.message || "Failed to add category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-
-        } catch (error) {
-            console.error("Error adding category:", error.response?.data || error.message);
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center mt-10">
-            <div className="p-6 rounded-xl w-full max-w-md bg-neutral-200 shadow-lg">
-                <div className="mb-4 font-bold text-2xl text-neutral-700 text-center">
-                    Add a New Category
-                </div>
-                <Tooltip title="+ Add Category" arrow placement="bottom">
-                    <Button variant="contained" fullWidth className="text-white font-bold px-6 py-3 rounded-lg" onClick={handleClickOpen}>
-                        + Add Category
-                    </Button>
-                </Tooltip>
-            </div>
-
-            <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-                <div className="bg-cyan-600 py-4 text-white text-2xl font-bold text-center">
-                    Add Category
-                </div>
-                <DialogContent className="bg-black/10">
-                    <Formik
-                        initialValues={{ name: "", description: "", image: null }}
-                        validationSchema={validationSchema}
-                        onSubmit={handleSubmit}
-                    >
-                        {({ setFieldValue, errors, touched }) => (
-                            <Form className="space-y-2">
-                                <Field as={TextField} label="Category Name" name="name" variant="outlined" fullWidth required
-                                    error={touched.name && Boolean(errors.name)} helperText={touched.name && errors.name} />
-
-                                <Field as={TextField} label="Category Description" name="description" variant="outlined" fullWidth multiline rows={3}
-                                    error={touched.description && Boolean(errors.description)} helperText={touched.description && errors.description} />
-
-                                <div className="bg-white rounded-lg p-3 shadow-sm">
-                                    <label className="block font-semibold mb-2 text-gray-700">Upload Category Image</label>
-                                    <Tooltip title="Upload Image" arrow placement="bottom">
-                                        <Button component="label" variant="contained" startIcon={<CloudUploadIcon />} className="rounded-xl">
-                                            Upload Image
-                                            <VisuallyHiddenInput type="file" accept="image/*" onChange={(e) => handleImageChange(e, setFieldValue)} />
-                                        </Button>
-                                    </Tooltip>
-                                    {categoryImage && (
-                                        <>
-                                            <Typography className="text-sm mt-2 text-gray-600">{categoryImage.name}</Typography>
-                                            <div className="mt-2">
-                                                <img src={previewImage} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
-                                <DialogActions className="rounded-b-xl flex justify-between px-4 pb-4">
-                                    <Tooltip title="Cancel" arrow placement="bottom">
-                                        <Button onClick={handleClose} color="error" variant="contained" className="rounded-lg">
-                                            Cancel
-                                        </Button>
-                                    </Tooltip>
-
-                                    <Tooltip title="Save Category" arrow placement="bottom">
-                                        <Button type="submit" color="primary" variant="contained" className="rounded-lg">
-                                            Save Category
-                                        </Button>
-                                    </Tooltip>
-                                </DialogActions>
-                            </Form>
-                        )}
-                    </Formik>
-                </DialogContent>
-            </Dialog>
+  return (
+    <>
+      {/* Add Category Button */}
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex justify-center mt-10"
+      >
+        <div className="p-6 rounded-xl w-full max-w-md shadow-lg"
+          style={{ backgroundColor: `${COLORS.primary}10` }}
+        >
+          <Typography variant="h6" component="div" 
+            sx={{
+              mb: 4,
+              fontWeight: "bold",
+              textAlign: "center",
+              color: COLORS.primaryDark
+            }}
+          >
+            Add a New Category
+          </Typography>
+          <Tooltip title="Add Category (Ctrl+Shift+C)" arrow placement="bottom">
+            <motion.div
+              onClick={handleOpen}
+              className="flex items-center justify-center gap-2 p-2 rounded-lg cursor-pointer"
+              style={{
+                backgroundColor: COLORS.primary,
+                color: COLORS.primaryLight
+              }}
+            >
+              <AiOutlinePlus className="text-xl" />
+              <span className="font-medium">Add Category</span>
+            </motion.div>
+          </Tooltip>
         </div>
-    );
+      </motion.div>
+
+      {/* Add Category Dialog */}
+      <AnimatePresence>
+        {open && (
+          <Dialog
+            open={open}
+            onClose={handleClose}
+            maxWidth="sm"
+            fullWidth
+            slotProps={{
+              paper: {
+                sx: {
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  background: "white",
+                  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+                  maxWidth: "500px"
+                }
+              }
+            }}
+          >
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={modalVariants}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
+                  padding: "16px 24px",
+                  position: "relative"
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    color: COLORS.primaryLight,
+                    fontWeight: "bold",
+                    textAlign: "center"
+                  }}
+                >
+                  Add New Category
+                </Typography>
+                <IconButton
+                  onClick={handleClose}
+                  sx={{
+                    position: "absolute",
+                    right: "16px",
+                    top: "16px",
+                    color: COLORS.primaryLight
+                  }}
+                >
+                  <AiOutlineClose />
+                </IconButton>
+              </div>
+
+              {/* Content */}
+              <DialogContent sx={{ p: 3 }}>
+                <Formik
+                  initialValues={{
+                    name: "",
+                    description: "",
+                    image: null
+                  }}
+                  validationSchema={validationSchema}
+                  onSubmit={handleSubmit}
+                >
+                  {({ setFieldValue, values, errors, touched }) => (
+                    <Form className="space-y-4">
+                      {/* Name Field */}
+                      <motion.div variants={itemVariants}>
+                        <Field
+                          as={TextField}
+                          name="name"
+                          label="Category Name"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            mb: 1,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: COLORS.primary
+                              },
+                              "&:hover fieldset": {
+                                borderColor: COLORS.primaryDark
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: COLORS.primaryDark,
+                                borderWidth: "2px"
+                              }
+                            }
+                          }}
+                          error={touched.name && Boolean(errors.name)}
+                          helperText={touched.name && errors.name}
+                        />
+                      </motion.div>
+
+                      {/* Description Field */}
+                      <motion.div variants={itemVariants}>
+                        <Field
+                          as={TextField}
+                          name="description"
+                          label="Description"
+                          variant="outlined"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          sx={{
+                            mb: 1,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              "& fieldset": {
+                                borderColor: COLORS.primary
+                              },
+                              "&:hover fieldset": {
+                                borderColor: COLORS.primaryDark
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: COLORS.primaryDark,
+                                borderWidth: "2px"
+                              }
+                            }
+                          }}
+                          error={touched.description && Boolean(errors.description)}
+                          helperText={touched.description && errors.description}
+                        />
+                      </motion.div>
+
+                      {/* Image Upload */}
+                      <motion.div variants={itemVariants}>
+                        <div
+                          style={{
+                            border: `2px dashed ${COLORS.primary}`,
+                            borderRadius: "8px",
+                            padding: "16px",
+                            textAlign: "center",
+                            backgroundColor: `${COLORS.primary}08`
+                          }}
+                        >
+                          <label htmlFor="image-upload">
+                            <input
+                              id="image-upload"
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => handleImageChange(e, setFieldValue)}
+                            />
+                            <Button
+                              component="span"
+                              startIcon={<FiUpload />}
+                              sx={{
+                                color: COLORS.primaryDark,
+                                borderColor: COLORS.primary,
+                                "&:hover": {
+                                  backgroundColor: `${COLORS.primary}10`,
+                                  borderColor: COLORS.primaryDark
+                                }
+                              }}
+                              variant="outlined"
+                            >
+                              Upload Image
+                            </Button>
+                          </label>
+                          {previewImage && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="mt-4"
+                            >
+                              <img
+                                src={previewImage}
+                                alt="Preview"
+                                style={{
+                                  width: "100px",
+                                  height: "100px",
+                                  objectFit: "cover",
+                                  borderRadius: "8px",
+                                  border: `2px solid ${COLORS.primary}`
+                                }}
+                              />
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+
+                      {/* Error Message */}
+                      {error && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-red-500 text-center"
+                        >
+                          {error}
+                        </motion.div>
+                      )}
+
+                      {/* Actions */}
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex justify-end gap-3 mt-4"
+                      >
+                        <Button
+                          onClick={handleClose}
+                          sx={{
+                            backgroundColor: COLORS.danger,
+                            color: COLORS.primaryLight,
+                            "&:hover": {
+                              backgroundColor: `${COLORS.danger}90`
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          sx={{
+                            backgroundColor: COLORS.success,
+                            color: COLORS.primaryLight,
+                            "&:hover": {
+                              backgroundColor: `${COLORS.success}90`
+                            },
+                            "&:disabled": {
+                              backgroundColor: `${COLORS.textSecondary}60`
+                            }
+                          }}
+                        >
+                          {isSubmitting ? (
+                            <CircularProgress size={24} sx={{ color: COLORS.primaryLight }} />
+                          ) : (
+                            "Add Category"
+                          )}
+                        </Button>
+                      </motion.div>
+                    </Form>
+                  )}
+                </Formik>
+              </DialogContent>
+            </motion.div>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </>
+  );
 };
 
 export default Category;
