@@ -360,14 +360,15 @@ const Orders = () => {
   };
 
   if (loading) return (
-    <div className="flex justify-center items-center w-screen h-screen">
+    <div className="flex justify-center items-center w-screen h-screen bg-white">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className="rounded-full h-20 w-20 border-t-2 border-b-2 border-cyan-700"
+        className="rounded-full h-20 w-20 border-4 border-t-indigo-700 border-b-indigo-700 border-l-indigo-700/30 border-r-indigo-700/30"
       ></motion.div>
     </div>
   );
+  
 
   if (error) return (
     <motion.div
@@ -771,7 +772,7 @@ const Orders = () => {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 border text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 border bg-black/10 text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
             >
               Previous
             </button>
@@ -792,7 +793,7 @@ const Orders = () => {
                 <button
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
-                  className={`px-4 py-2 border rounded-md text-sm font-medium ${page === pageNum ? 'bg-cyan-600 text-white' : 'bg-white text-gray-700'
+                  className={`px-4 py-2 border rounded-md text-sm font-medium ${page === pageNum ? 'bg-indigo-600 text-white' : 'bg-indigo-600/10 text-gray-700'
                     }`}
                 >
                   {pageNum}
@@ -803,7 +804,7 @@ const Orders = () => {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 border text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 border bg-black/10 text-gray-700 rounded-md text-sm font-medium disabled:opacity-50"
             >
               Next
             </button>
