@@ -363,8 +363,8 @@ const Orders = () => {
     <div className="flex justify-center items-center w-screen h-screen bg-white">
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className="rounded-full h-20 w-20 border-4 border-t-indigo-700 border-b-indigo-700 border-l-indigo-700/30 border-r-indigo-700/30"
+        transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
+        className="rounded-full h-20 w-20 border-4 border-t-indigo-700/30 border-b-indigo-700 border-l-indigo-700/30 border-r-indigo-700"
       ></motion.div>
     </div>
   );
