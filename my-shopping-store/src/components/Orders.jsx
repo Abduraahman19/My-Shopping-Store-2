@@ -740,18 +740,18 @@ const Orders = () => {
                           transition={{ delay: 0.3 }}
                           className="mt-6 flex justify-end"
                         >
-                          <div className="bg-cyan-50 rounded-2xl shadow-lg p-4 w-full md:w-1/3">
-                            <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                          <div className="bg-indigo-100 rounded-2xl shadow-lg p-4 w-full md:w-1/3">
+                            <div className="flex justify-between items-center border-b border-white pb-2 mb-2">
                               <span className="font-bold text-gray-600">Subtotal</span>
                               <span className="font-medium text-gray-800">Rs.{order.grandTotal.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                            <div className="flex justify-between items-center border-b border-white pb-2 mb-2">
                               <span className="font-bold text-gray-600">Shipping</span>
                               <span className="font-medium text-gray-800">Rs.0</span>
                             </div>
                             <div className="flex justify-between items-center pt-2">
                               <span className="font-bold text-lg text-gray-800">Grand Total</span>
-                              <span className="font-bold text-lg text-cyan-600">Rs.{order.grandTotal.toLocaleString()}</span>
+                              <span className="font-bold text-lg text-indigo-600">Rs.{order.grandTotal.toLocaleString()}</span>
                             </div>
                           </div>
                         </motion.div>

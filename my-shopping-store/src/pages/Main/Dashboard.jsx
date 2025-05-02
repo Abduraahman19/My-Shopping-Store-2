@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiPackage} from "react-icons/fi";
+import { FiLogOut, FiPackage } from "react-icons/fi";
 import { TbCategoryPlus } from "react-icons/tb";
 import { AiOutlineProduct, AiOutlineDashboard } from "react-icons/ai";
 import { MdKeyboardArrowUp, MdKeyboardArrowDown, MdNotifications } from "react-icons/md";
@@ -29,32 +29,78 @@ const LOCAL_STORAGE_KEYS = {
   CATEGORIES: "categories"
 };
 
+// Updated color scheme with modern gradient approach
 const COLORS = {
-  primary: "#4f46e5",       
-  primaryLight: "#ffffff",  
-  primaryDark: "#4338ca",   
-  secondary: "#10b981",     
-  accent: "#f59e0b",        
-  background: "#f8fafc",    
-  card: "#4f46e5",          
-  textPrimary: "#ffffff",   
-  textSecondary: "#64748b", 
-  success: "#10b981",       
-  warning: "#f59e0b",       
-  danger: "#ef4444",        
-  info: "#3b82f6"          
+  primary: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  primaryLight: "#f8fafc",
+  primaryDark: "#4c51bf",
+  secondary: "#10b981",
+  accent: "#f59e0b",
+  background: "#f8fafc",
+  card: "linear-gradient(to bottom right, #ffffff, #f3f4f6)",
+  textPrimary: "#1e293b",
+  textSecondary: "#64748b",
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+  info: "#3b82f6",
+  sidebar: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)"
 };
 
+// Enhanced animations
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.3 } },
-  exit: { opacity: 0 }
+  visible: { 
+    opacity: 1, 
+    transition: { 
+      duration: 0.5,
+      ease: "easeInOut"
+    } 
+  },
+  exit: { 
+    opacity: 0,
+    transition: {
+      duration: 0.3
+    }
+  }
 };
 
 const slideIn = {
   hidden: { x: -50, opacity: 0 },
-  visible: { x: 0, opacity: 1, transition: { duration: 0.3 } },
-  exit: { x: 50, opacity: 0 }
+  visible: { 
+    x: 0, 
+    opacity: 1, 
+    transition: { 
+      duration: 0.5,
+      ease: [0.25, 0.1, 0.25, 1]
+    } 
+  },
+  exit: { 
+    x: 50, 
+    opacity: 0,
+    transition: {
+      duration: 0.3
+    }
+  }
+};
+
+const scaleUp = {
+  hidden: { scale: 0.95, opacity: 0 },
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      duration: 0.4,
+      ease: "backOut"
+    }
+  },
+  exit: {
+    scale: 0.95,
+    opacity: 0,
+    transition: {
+      duration: 0.3
+    }
+  }
 };
 
 const Sidebar = ({ 
@@ -199,18 +245,22 @@ const Sidebar = ({
       variants={fadeIn}
     >
       <motion.div
-        className={`mt-[83px] mb-5 ml-2.5 rounded-xl bg-white shadow-lg ${
+        className={`mt-[83px] mb-5 ml-2.5 rounded-xl shadow-lg ${
           isCollapsed ? "w-16" : "w-64"
         } transition-all duration-300 flex flex-col h-[calc(100vh-93px)] p-4 fixed top-0 left-0 overflow-y-auto custom-scrollbar border-r border-gray-200`}
-        style={{ backgroundColor: COLORS.card }}
+        style={{ background: COLORS.sidebar }}
         layout
       >
+        {/* Dashboard Button */}
         <Tooltip title="Dashboard" arrow placement="right">
           <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
+            whileHover={{ 
+              scale: 1.02, 
+              backgroundColor: "rgba(255,255,255,0.1)",
+              transition: { duration: 0.2 }
+            }}
             whileTap={{ scale: 0.98 }}
             className="cursor-pointer gap-3 p-2 rounded-lg flex items-center"
-            style={{ color: COLORS.primary }}
             onClick={() => {
               onSelectCategory(null);
               onSelectSubCategory(null);
@@ -219,37 +269,72 @@ const Sidebar = ({
             aria-label="Dashboard"
           >
             <AiOutlineDashboard className="text-2xl text-white" />
-            {!isCollapsed && <h1 className="text-lg text-white font-bold">Dashboard</h1>}
+            {!isCollapsed && (
+              <motion.h1 
+                className="text-lg text-white font-bold"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Dashboard
+              </motion.h1>
+            )}
           </motion.button>
         </Tooltip>
 
+        {/* Refresh Button */}
         <Tooltip title="Refresh Data" arrow placement="right">
           <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
+            whileHover={{ 
+              scale: 1.02, 
+              backgroundColor: "rgba(255,255,255,0.1)",
+              transition: { duration: 0.2 }
+            }}
             whileTap={{ scale: 0.98 }}
             className="cursor-pointer gap-3 p-2 rounded-lg flex items-center mt-2"
-            style={{ color: COLORS.primary }}
             onClick={refreshData}
             aria-label="Refresh"
           >
             <RefreshCw className={`text-2xl text-white ${loading.categories || loading.products ? "animate-spin" : ""}`} />
-            {!isCollapsed && <h1 className="text-lg font-bold text-white">Refresh</h1>}
+            {!isCollapsed && (
+              <motion.h1 
+                className="text-lg font-bold text-white"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Refresh
+              </motion.h1>
+            )}
           </motion.button>
         </Tooltip>
 
+        {/* Categories Section */}
         <Tooltip title="Categories" arrow placement="right">
           <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
+            whileHover={{ 
+              scale: 1.02, 
+              backgroundColor: "rgba(255,255,255,0.1)",
+              transition: { duration: 0.2 }
+            }}
             whileTap={{ scale: 0.98 }}
             className="flex items-center justify-between p-2 rounded-lg cursor-pointer w-full mt-4"
-            style={{ color: COLORS.primary }}
             onClick={() => toggleDropdown("main")}
             aria-expanded={openDropdowns["main"]}
             aria-label="Toggle categories"
           >
             <div className="flex text-white items-center space-x-3">
               <TbCategoryPlus className="text-2xl font-bold" />
-              {!isCollapsed && <span className="font-bold text-lg">Categories</span>}
+              {!isCollapsed && (
+                <motion.span 
+                  className="font-bold text-lg"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Categories
+                </motion.span>
+              )}
             </div>
             {!isCollapsed &&
               (openDropdowns["main"] ? (
@@ -270,24 +355,34 @@ const Sidebar = ({
               variants={fadeIn}
             >
               {loading.categories ? (
-                <div className="flex justify-center py-4">
+                <motion.div 
+                  className="flex justify-center py-4"
+                  variants={fadeIn}
+                >
                   <div className="animate-pulse flex space-x-4">
-                    <div className="rounded-full bg-gray-200 h-6 w-6"></div>
+                    <div className="rounded-full bg-white/20 h-6 w-6"></div>
                   </div>
-                </div>
+                </motion.div>
               ) : (
-                categories.map((category) => (
+                categories.map((category, index) => (
                   <motion.li 
                     key={category._id}
                     variants={slideIn}
                     layout
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    transition={{ delay: index * 0.05 }}
                   >
-                    <div className="p-2 flex items-center hover:bg-gray-100/15 text-white rounded-lg cursor-pointer">
-                      <img
+                    <div className="p-2 flex items-center hover:bg-white/10 text-white rounded-lg cursor-pointer transition-colors duration-200">
+                      <motion.img
                         src={category.image}
                         alt={category.name}
-                        className="w-9 h-9 rounded-full mr-2 object-cover cursor-pointer border border-gray-200"
+                        className="w-9 h-9 rounded-full mr-2 object-cover cursor-pointer border-2 border-white/20"
                         onClick={() => onSelectCategory(category)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       />
 
                       <button
@@ -295,7 +390,16 @@ const Sidebar = ({
                         onClick={() => toggleDropdown(category._id)}
                         aria-expanded={openDropdowns[category._id]}
                       >
-                        {!isCollapsed && <span className="truncate text-left w-32" style={{ color: COLORS.textPrimary }}>{category.name}</span>}
+                        {!isCollapsed && (
+                          <motion.span 
+                            className="truncate text-left w-32"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                          >
+                            {category.name}
+                          </motion.span>
+                        )}
                         {!isCollapsed &&
                           (openDropdowns[category._id] ? (
                             <MdKeyboardArrowUp className="ml-auto" />
@@ -315,26 +419,43 @@ const Sidebar = ({
                           variants={fadeIn}
                         >
                           {loading.subcategories ? (
-                            <div className="flex justify-center py-2">
+                            <motion.div 
+                              className="flex justify-center py-2"
+                              variants={fadeIn}
+                            >
                               <div className="animate-pulse flex space-x-4">
-                                <div className="rounded-full bg-gray-200 h-4 w-4"></div>
+                                <div className="rounded-full bg-white/20 h-4 w-4"></div>
                               </div>
-                            </div>
+                            </motion.div>
                           ) : (
-                            subcategories[category._id].map((subcategory) => (
+                            subcategories[category._id].map((subcategory, subIndex) => (
                               <motion.li
                                 key={subcategory._id}
                                 variants={slideIn}
+                                custom={subIndex}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                transition={{ delay: subIndex * 0.05 }}
                                 whileHover={{ x: 5 }}
-                                className="p-2 flex items-center hover:bg-gray-100/15 rounded-lg cursor-pointer"
+                                className="p-2 flex items-center hover:bg-white/10 rounded-lg cursor-pointer transition-colors duration-200"
                                 onClick={() => onSelectSubCategory(subcategory)}
                               >
-                                <img
+                                <motion.img
                                   src={subcategory.image}
                                   alt={subcategory.name}
-                                  className="w-7 h-7 rounded-full mr-2 object-cover border border-gray-200"
+                                  className="w-7 h-7 rounded-full mr-2 object-cover border-2 border-white/20"
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
                                 />
-                                <span className="truncate text-left w-32" style={{ color: COLORS.textPrimary }}>{subcategory.name}</span>
+                                <motion.span 
+                                  className="truncate text-left w-32"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.1 }}
+                                >
+                                  {subcategory.name}
+                                </motion.span>
                               </motion.li>
                             ))
                           )}
@@ -348,19 +469,32 @@ const Sidebar = ({
           )}
         </AnimatePresence>
 
+        {/* Products Section */}
         <div className="mt-4">
           <Tooltip title="Products" arrow placement="right">
             <motion.button
-              whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
+              whileHover={{ 
+                scale: 1.02, 
+                backgroundColor: "rgba(255,255,255,0.1)",
+                transition: { duration: 0.2 }
+              }}
               whileTap={{ scale: 0.98 }}
               className="cursor-pointer gap-3 p-2 rounded-lg flex items-center w-full"
-              style={{ color: COLORS.primary }}
               onClick={toggleProductDropdown}
               aria-expanded={dropdownOpen["product"]}
               aria-label="Toggle products"
             >
               <AiOutlineProduct className="text-2xl text-white" />
-              {!isCollapsed && <h1 className="text-lg text-white font-bold">Products</h1>}
+              {!isCollapsed && (
+                <motion.h1 
+                  className="text-lg text-white font-bold"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Products
+                </motion.h1>
+              )}
               {!isCollapsed &&
                 (dropdownOpen["product"] ? (
                   <MdKeyboardArrowUp className="ml-auto text-white text-xl" />
@@ -382,33 +516,55 @@ const Sidebar = ({
                 <Product />
                 <div className="space-y-2">
                   {loading.products ? (
-                    <div className="flex justify-center py-4">
+                    <motion.div 
+                      className="flex justify-center py-4"
+                      variants={fadeIn}
+                    >
                       <div className="animate-pulse flex space-x-4">
-                        <div className="rounded-full bg-gray-200 h-8 w-8"></div>
+                        <div className="rounded-full bg-white/20 h-8 w-8"></div>
                         <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-white/20 rounded w-3/4"></div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ) : (
-                    products.map((product) => (
+                    products.map((product, index) => (
                       <motion.button
                         key={product._id}
-                        whileHover={{ x: 5 }}
-                        className="p-2 flex items-center gap-2 rounded-lg hover:bg-gray-100/15 cursor-pointer transition-all duration-200 w-full"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ 
+                          x: 5,
+                          backgroundColor: "rgba(255,255,255,0.1)"
+                        }}
+                        className="p-2 flex items-center gap-2 rounded-lg hover:bg-white/10 cursor-pointer transition-all duration-200 w-full"
                         onClick={() => onSelectProduct(product)}
                       >
-                        <img
+                        <motion.img
                           src={product.image}
                           alt={product.name}
-                          className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-white/20"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         />
-                        <span className="text-sm truncate w-[120px] text-left" style={{ color: COLORS.textPrimary }}>
+                        <motion.span 
+                          className="text-sm truncate w-[120px] text-left text-white"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
                           {product.name}
-                        </span>
-                        <span className="ml-auto font-bold" style={{ color: COLORS.secondary }}>
+                        </motion.span>
+                        <motion.span 
+                          className="ml-auto font-bold"
+                          style={{ color: COLORS.secondary }}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
                           Rs.{new Intl.NumberFormat("en-US").format(product.price)}
-                        </span>
+                        </motion.span>
                       </motion.button>
                     ))
                   )}
@@ -418,32 +574,35 @@ const Sidebar = ({
           </AnimatePresence>
         </div>
 
+        {/* Orders Section */}
         <Tooltip title="Orders" arrow placement="right">
           <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: COLORS.primaryLight + '20' }}
+            whileHover={{ 
+              scale: 1.02, 
+              backgroundColor: "rgba(255,255,255,0.1)",
+              transition: { duration: 0.2 }
+            }}
             whileTap={{ scale: 0.98 }}
             className="cursor-pointer gap-3 p-2 rounded-lg flex items-center w-full mt-4"
-            style={{ color: COLORS.primary }}
             onClick={onOrdersClick}
             aria-label="View orders"
           >
             <FiPackage className="text-2xl text-white" />
             {!isCollapsed && (
-              <h1 className="text-lg text-white font-bold">Orders</h1>
+              <motion.h1 
+                className="text-lg text-white font-bold"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Orders
+              </motion.h1>
             )}
           </motion.button>
         </Tooltip>
       </motion.div>
     </motion.div>
   );
-};
-
-Sidebar.propTypes = {
-  isCollapsed: PropTypes.bool.isRequired,
-  onSelectCategory: PropTypes.func.isRequired,
-  onSelectSubCategory: PropTypes.func.isRequired,
-  onSelectProduct: PropTypes.func.isRequired,
-  onOrdersClick: PropTypes.func.isRequired,
 };
 
 const Layout = () => {
@@ -461,6 +620,7 @@ const Layout = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showOrders, setShowOrders] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [isHoveringSidebar, setIsHoveringSidebar] = useState(false);
 
   const navigate = useNavigate();
 
@@ -680,11 +840,13 @@ const Layout = () => {
 
   return (
     <div className="h-screen w-screen fixed overflow-y-auto" style={{ backgroundColor: COLORS.background }}>
+      {/* Navigation Bar */}
       <motion.nav 
-        className="bg-gradient-to-r from-indigo-600 to-indigo-700 shadow-lg text-white rounded-xl px-5 py-3 flex items-center justify-between fixed top-2 left-0 right-0 mx-2 z-50"
+        className="shadow-lg text-white rounded-xl px-5 py-3 flex items-center justify-between fixed top-2 left-0 right-0 mx-2 z-50"
+        style={{ background: COLORS.primary }}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
       >
         <div className="flex items-center w-full justify-between">
           <div className="gap-4 flex items-center">
@@ -694,7 +856,7 @@ const Layout = () => {
               placement="bottom"
             >
               <motion.button 
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsCollapsed(!isCollapsed)}
               >
@@ -708,8 +870,11 @@ const Layout = () => {
             
             <motion.h2
               whileHover={{ scale: 1.02 }}
-              className="text-xl sm:text-2xl font-bold cursor-pointer font-serif"
+              className="text-xl sm:text-2xl font-bold cursor-pointer font-sans"
               onClick={handleResetDashboard}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
             >
               My Shopping Store
             </motion.h2>
@@ -726,30 +891,41 @@ const Layout = () => {
             <Tooltip title="Notifications" arrow placement="bottom">
               <div className="relative group">
                 <motion.button 
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.9 }}
                   className="p-2 rounded-full hover:bg-white/20"
                 >
                   <MdNotifications className="text-2xl" />
                   {notifications.some(n => !n.read) && (
-                    <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                    <motion.span 
+                      className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring" }}
+                    ></motion.span>
                   )}
                 </motion.button>
                 
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block border border-gray-200">
+                <motion.div 
+                  className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden group-hover:block border border-gray-200"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
                   <div className="p-3 border-b border-gray-200">
                     <h3 className="font-bold text-gray-800">Notifications</h3>
                   </div>
                   <div className="max-h-60 overflow-y-auto">
                     {notifications.map(notification => (
-                      <div 
+                      <motion.div 
                         key={notification.id}
                         className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
                         onClick={() => markNotificationAsRead(notification.id)}
+                        whileHover={{ scale: 1.02 }}
                       >
                         <p className="text-sm text-gray-800">{notification.message}</p>
                         <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                   <div className="p-3 border-t border-gray-200 text-center">
@@ -757,17 +933,20 @@ const Layout = () => {
                       View all notifications
                     </button>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </Tooltip>
             
             <Tooltip title="Logout" arrow placement="bottom">
               <motion.button 
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, backgroundColor: "#dc2626" }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-red-500 flex items-center px-4 py-2 rounded-lg hover:bg-red-600 cursor-pointer shadow-md transition-colors" 
                 onClick={handleLogout}
                 aria-label="Logout"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
               >
                 <FiLogOut className="text-xl" />
                 <span className="ml-2 font-bold hidden sm:block">Logout</span>
@@ -777,6 +956,7 @@ const Layout = () => {
         </div>
       </motion.nav>
 
+      {/* Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
         onSelectCategory={handleSelectCategory}
@@ -785,6 +965,7 @@ const Layout = () => {
         onOrdersClick={handleOrdersClick}
       />
 
+      {/* Main Content */}
       <motion.main 
         className={`transition-all duration-300 ${
           isCollapsed ? "ml-16" : "ml-64"
@@ -806,13 +987,23 @@ const Layout = () => {
               className="p-6 text-center md:text-left"
               variants={slideIn}
             >
-              <h1 className="text-4xl text-gray-700 md:text-5xl font-extrabold">
+              <motion.h1 
+                className="text-4xl text-gray-700 md:text-5xl font-extrabold"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
                 Welcome to
                 <span className="text-indigo-600 ml-2"> My Shopping Store</span>
-              </h1>
-              <p className="mt-3 text-lg text-gray-600 font-semibold">
+              </motion.h1>
+              <motion.p 
+                className="mt-3 text-lg text-gray-600 font-semibold"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
                 Manage your categories efficiently!
-              </p>
+              </motion.p>
             </motion.div>
 
             <motion.div 
@@ -820,55 +1011,83 @@ const Layout = () => {
               variants={slideIn}
             >
               <motion.div 
-                className="w-full md:mt-[24px] max-w-xl bg-indigo-600/10 p-6 rounded-xl shadow-xl border border-gray-200 
+                className="w-full md:mt-[24px] max-w-xl p-6 rounded-xl shadow-xl border border-gray-200 
                           transition-all duration-300 transform hover:scale-[1.01] hover:shadow-2xl"
+                style={{ background: COLORS.card }}
                 whileHover={{ y: -10 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Category />
               </motion.div>
 
               <motion.div 
-                className="w-full max-w-xl bg-indigo-600/10 p-6 rounded-xl shadow-xl border border-gray-200 
+                className="w-full max-w-xl p-6 rounded-xl shadow-xl border border-gray-200 
                           transition-all duration-300 transform hover:scale-[1.01] hover:shadow-2xl"
+                style={{ background: COLORS.card }}
                 whileHover={{ y: -10 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <SubCategory />
               </motion.div>
             </motion.div>
 
+            {/* Selected Category */}
             <AnimatePresence>
               {selectedCategory && (
                 <motion.div
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={fadeIn}
+                  variants={scaleUp}
                 >
-                  <h1 className="ml-8 mb-2 text-2xl text-gray-600 font-bold">
+                  <motion.h1 
+                    className="ml-8 mb-2 text-2xl text-gray-600 font-bold"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
                     Category
-                  </h1>
+                  </motion.h1>
                   <motion.div 
-                    className="max-w-2xl bg-indigo-600/15 mb-10 p-6 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
-                    whileHover={{ scale: 1.05 }}
+                    className="max-w-2xl mb-10 p-6 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                    style={{ background: COLORS.card }}
+                    whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-center mb-4">
                       <motion.img
                         whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         src={selectedCategory.image}
                         alt={selectedCategory.name}
                         className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer shadow-md border-2 border-indigo-100"
                         onClick={() => handleImageClick(selectedCategory.image)}
                       />
-                      <h1 className="text-3xl text-gray-600 font-bold">
+                      <motion.h1 
+                        className="text-3xl text-gray-600 font-bold"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
                         {selectedCategory.name}
-                      </h1>
+                      </motion.h1>
                     </div>
 
-                    <p className="ml-16 text-xl text-gray-600 font-semibold">
+                    <motion.p 
+                      className="ml-16 text-xl text-gray-600 font-semibold"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
                       {selectedCategory.description}
-                    </p>
+                    </motion.p>
 
-                    <div className="flex justify-end gap-4 mt-6">
+                    <motion.div 
+                      className="flex justify-end gap-4 mt-6"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
                       {selectedCategory._id && (
                         <motion.div whileHover={{ scale: 1.05 }}>
                           <EditCategory
@@ -880,7 +1099,7 @@ const Layout = () => {
 
                       <Tooltip title="Delete" arrow placement="top">
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          whileHover={{ scale: 1.05, backgroundColor: "#dc2626" }}
                           whileTap={{ scale: 0.95 }}
                           className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
                           onClick={() => handleDeleteCategory(selectedCategory._id)}
@@ -890,45 +1109,69 @@ const Layout = () => {
                           Delete
                         </motion.button>
                       </Tooltip>
-                    </div>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
 
+            {/* Selected Sub-Category */}
             <AnimatePresence>
               {selectedSubCategory && (
                 <motion.div
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={fadeIn}
+                  variants={scaleUp}
                 >
-                  <h1 className="ml-8 mb-2 text-2xl text-gray-600 font-bold">
+                  <motion.h1 
+                    className="ml-8 mb-2 text-2xl text-gray-600 font-bold"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
                     Sub-Category
-                  </h1>
+                  </motion.h1>
                   <motion.div 
-                    className="max-w-xl bg-indigo-600/15 p-6 mb-10 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                    className="max-w-xl p-6 mb-10 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                    style={{ background: COLORS.card }}
                     whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-center mb-4">
                       <motion.img
                         whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         src={selectedSubCategory.image}
                         alt={selectedSubCategory.name}
                         className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer shadow-md border-2 border-indigo-100"
                         onClick={() => handleImageClick(selectedSubCategory.image)}
                       />
-                      <h1 className="text-3xl text-gray-600 font-bold">
+                      <motion.h1 
+                        className="text-3xl text-gray-600 font-bold"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
                         {selectedSubCategory.name}
-                      </h1>
+                      </motion.h1>
                     </div>
 
-                    <p className="ml-16 text-xl text-gray-600 font-semibold">
+                    <motion.p 
+                      className="ml-16 text-xl text-gray-600 font-semibold"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
                       {selectedSubCategory.description}
-                    </p>
+                    </motion.p>
 
-                    <div className="flex justify-end gap-4 mt-6">
+                    <motion.div 
+                      className="flex justify-end gap-4 mt-6"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
                       <motion.div whileHover={{ scale: 1.05 }}>
                         <EditSubCategory
                           selectedSubCategory={selectedSubCategory}
@@ -943,7 +1186,7 @@ const Layout = () => {
 
                       <Tooltip title="Delete" arrow placement="top">
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          whileHover={{ scale: 1.05, backgroundColor: "#dc2626" }}
                           whileTap={{ scale: 0.95 }}
                           className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
                           onClick={() => handleDeleteSubCategory(selectedSubCategory._id)}
@@ -953,12 +1196,13 @@ const Layout = () => {
                           Delete
                         </motion.button>
                       </Tooltip>
-                    </div>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
 
+            {/* Selected Sub-Categories (multiple) */}
             <AnimatePresence>
               {selectedSubCategory2 && selectedSubCategory2.length > 0 && (
                 <motion.div
@@ -967,33 +1211,58 @@ const Layout = () => {
                   exit="exit"
                   variants={fadeIn}
                 >
-                  <h1 className="ml-8 mb-2 text-2xl text-gray-600 font-bold">
+                  <motion.h1 
+                    className="ml-8 mb-2 text-2xl text-gray-600 font-bold"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
                     Sub-Categories
-                  </h1>
+                  </motion.h1>
                   <div className="grid lg:grid-cols-2 md:grid-cols-1">
-                    {selectedSubCategory2.map((sub) => (
+                    {selectedSubCategory2.map((sub, index) => (
                       <motion.div
                         key={sub._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
                         whileHover={{ y: -5 }}
-                        className="max-w-xl bg-indigo-600/10 mb-10 p-4 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                        className="max-w-xl mb-10 p-4 rounded-xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                        style={{ background: COLORS.card }}
                       >
                         <div className="flex items-center">
                           <motion.img
                             whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             src={sub.image}
                             alt={sub.name}
                             className="w-[50px] h-[50px] rounded-full mx-2 object-cover cursor-pointer shadow-md border-2 border-indigo-100"
                             onClick={() => handleImageClick(sub.image)}
                           />
-                          <h1 className="text-2xl text-gray-600 font-bold">
+                          <motion.h1 
+                            className="text-2xl text-gray-600 font-bold"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                          >
                             {sub.name}
-                          </h1>
+                          </motion.h1>
                         </div>
 
-                        <p className="ml-16 text-lg text-gray-600 font-semibold">
+                        <motion.p 
+                          className="ml-16 text-lg text-gray-600 font-semibold"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
                           {sub.description}
-                        </p>
-                        <div className="flex justify-end pb-1 pr-1 gap-2 mt-1">
+                        </motion.p>
+                        <motion.div 
+                          className="flex justify-end pb-1 pr-1 gap-2 mt-1"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 }}
+                        >
                           <motion.div whileHover={{ scale: 1.05 }}>
                             <EditSubCategory
                               selectedSubCategory={sub}
@@ -1004,7 +1273,7 @@ const Layout = () => {
                           </motion.div>
                           <Tooltip title="Delete" arrow placement="top">
                             <motion.button
-                              whileHover={{ scale: 1.05 }}
+                              whileHover={{ scale: 1.05, backgroundColor: "#dc2626" }}
                               whileTap={{ scale: 0.95 }}
                               className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
                               onClick={() => handleDeleteSubCategory(sub._id)}
@@ -1014,7 +1283,7 @@ const Layout = () => {
                               Delete
                             </motion.button>
                           </Tooltip>
-                        </div>
+                        </motion.div>
                       </motion.div>
                     ))}
                   </div>
@@ -1022,47 +1291,76 @@ const Layout = () => {
               )}
             </AnimatePresence>
 
+            {/* Selected Product */}
             <AnimatePresence>
               {selectedProduct && (
                 <motion.div
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  variants={fadeIn}
+                  variants={scaleUp}
                 >
-                  <h1 className="ml-8 mb-2 text-2xl text-gray-600 font-bold">
+                  <motion.h1 
+                    className="ml-8 mb-2 text-2xl text-gray-600 font-bold"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
                     Product
-                  </h1>
+                  </motion.h1>
                   <motion.div 
-                    className="max-w-2xl bg-indigo-600/15 mb-10 p-6 rounded-2xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                    className="max-w-2xl mb-10 p-6 rounded-2xl shadow-lg border border-gray-200 transition-all duration-300 mx-8"
+                    style={{ background: COLORS.card }}
                     whileHover={{ scale: 1.005 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-center mb-4">
                       <motion.img
                         whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         src={selectedProduct.image}
                         alt={selectedProduct.name}
                         className="w-[100px] h-[100px] rounded-full mr-4 object-cover cursor-pointer shadow-md border-2 border-indigo-100"
                         onClick={() => handleImageClick(selectedProduct.image)}
                       />
                       <div>
-                        <h1 className="text-3xl text-gray-600 font-bold">
+                        <motion.h1 
+                          className="text-3xl text-gray-600 font-bold"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
                           {selectedProduct.name}
-                        </h1>
-                        <p className="text-gray-600 text-xl mb-2 flex items-center">
+                        </motion.h1>
+                        <motion.p 
+                          className="text-gray-600 text-xl mb-2 flex items-center"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
                           <span className="font-extrabold">Price:</span>
                           <span className="ml-2 font-bold text-emerald-500">
                             Rs.{new Intl.NumberFormat("en-US").format(selectedProduct.price)}
                           </span>
-                        </p>
+                        </motion.p>
                       </div>
                     </div>
 
-                    <p className="ml-[114px] text-xl text-gray-600 font-semibold">
+                    <motion.p 
+                      className="ml-[114px] text-xl text-gray-600 font-semibold"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
                       {selectedProduct.description}
-                    </p>
+                    </motion.p>
 
-                    <div className="flex justify-end gap-4 mt-6">
+                    <motion.div 
+                      className="flex justify-end gap-4 mt-6"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                    >
                       {selectedProduct._id && (
                         <motion.div whileHover={{ scale: 1.05 }}>
                           <Editproduct
@@ -1073,7 +1371,7 @@ const Layout = () => {
                       )}
                       <Tooltip title="Delete" arrow placement="top">
                         <motion.button
-                          whileHover={{ scale: 1.05 }}
+                          whileHover={{ scale: 1.05, backgroundColor: "#dc2626" }}
                           whileTap={{ scale: 0.95 }}
                           className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition"
                           onClick={() => handleDeleteProduct(selectedProduct._id)}
@@ -1083,7 +1381,7 @@ const Layout = () => {
                           Delete
                         </motion.button>
                       </Tooltip>
-                    </div>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
               )}
@@ -1092,6 +1390,7 @@ const Layout = () => {
         )}
       </motion.main>
 
+      {/* Full Screen Image Viewer */}
       <AnimatePresence>
         {fullScreenImage && (
           <motion.div
@@ -1130,7 +1429,7 @@ const Layout = () => {
 
             <div className="absolute bottom-6 left-6 flex gap-3">
               <motion.button
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.3)" }}
                 whileTap={{ scale: 0.9 }}
                 className="w-12 h-12 flex justify-center items-center bg-white/20 text-white font-bold text-2xl rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm"
                 onClick={handleZoomIn}
@@ -1139,7 +1438,7 @@ const Layout = () => {
                 +
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.3)" }}
                 whileTap={{ scale: 0.9 }}
                 className="w-12 h-12 flex justify-center items-center bg-white/20 text-white font-bold text-2xl rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm"
                 onClick={handleZoomOut}
@@ -1148,7 +1447,7 @@ const Layout = () => {
                 -
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.3)" }}
                 whileTap={{ scale: 0.9 }}
                 className="w-12 h-12 flex justify-center items-center bg-white/20 text-white font-bold text-xl rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm"
                 onClick={handleResetZoom}
@@ -1159,7 +1458,7 @@ const Layout = () => {
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.3)" }}
               whileTap={{ scale: 0.9 }}
               className="absolute top-6 right-6 w-12 h-12 flex justify-center items-center bg-white/20 text-white font-bold text-3xl rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm"
               onClick={handleCloseFullScreenImage}
@@ -1171,6 +1470,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
+      {/* Custom Scrollbar Styles */}
       <style>
         {`
           body {
