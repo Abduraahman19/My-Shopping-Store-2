@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   FiPackage, FiTruck, FiCreditCard, FiUser,
-  FiCalendar, FiEdit, FiChevronDown, FiFile
+  FiCalendar, FiEdit, FiChevronDown, FiFile, FiX
 } from 'react-icons/fi';
 import { FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Orders = () => {
+const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,61 +21,156 @@ const Orders = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [totalOrders, setTotalOrders] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState('');
+  const [currentImageType, setCurrentImageType] = useState('');
+  const [viewType, setViewType] = useState('all');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        const [ordersResponse, paymentsResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/orders', {
+        let ordersData = [];
+        let transactionsData = [];
+        let paymentsData = [];
+        let totalCount = 0;
+
+        if (viewType === 'all' || viewType === 'orders') {
+          const ordersResponse = await axios.get('http://localhost:5000/api/orders', {
             params: {
               page,
               limit: 10,
-              status: statusFilter,
-              paymentStatus: paymentStatusFilter
+              status: viewType === 'all' ? statusFilter : statusFilter || undefined,
+              paymentStatus: viewType === 'all' ? paymentStatusFilter : paymentStatusFilter || undefined
             }
-          }),
-          axios.get('http://localhost:5000/api/payments')
-        ]);
+          });
 
-        if (!ordersResponse.data || !paymentsResponse.data) {
-          throw new Error("Invalid response from server");
+          ordersData = ordersResponse.data?.orders ||
+            (Array.isArray(ordersResponse.data) ? ordersResponse.data : []);
+
+          if (viewType === 'orders') {
+            totalCount = ordersResponse.data?.total || ordersData.length;
+          }
         }
 
-        const ordersData = Array.isArray(ordersResponse.data.orders)
-          ? ordersResponse.data.orders
-          : Array.isArray(ordersResponse.data)
-            ? ordersResponse.data
-            : [];
+        if (viewType === 'all' || viewType === 'transactions') {
+          const [paymentsResponse, transactionsResponse] = await Promise.all([
+            axios.get('http://localhost:5000/api/payments'),
+            axios.get('http://localhost:5000/api/transactions', {
+              params: {
+                page,
+                limit: 10,
+                status: viewType === 'all' ? statusFilter : statusFilter || undefined,
+                'paymentDetails.status': viewType === 'all' ? paymentStatusFilter : paymentStatusFilter || undefined
+              }
+            })
+          ]);
 
-        const paymentsData = Array.isArray(paymentsResponse.data.payments)
-          ? paymentsResponse.data.payments
-          : Array.isArray(paymentsResponse.data)
-            ? paymentsResponse.data
-            : [];
+          paymentsData = paymentsResponse.data?.payments ||
+            (Array.isArray(paymentsResponse.data) ? paymentsResponse.data : []);
 
-        const ordersWithPayments = ordersData.map(order => {
-          const payment = paymentsData.find(p => p.orderId === order._id);
+          try {
+            transactionsData = transactionsResponse.data?.transactions ||
+              transactionsResponse.data?.data ||
+              (Array.isArray(transactionsResponse.data) ? transactionsResponse.data : []);
+          } catch (e) {
+            console.error("Error processing transactions data:", e);
+            transactionsData = [];
+          }
+
+          if (viewType === 'transactions') {
+            totalCount = transactionsResponse.data?.total || transactionsData.length;
+          }
+        }
+
+        const transactionsAsOrders = transactionsData.map(transaction => {
+          const customer = transaction.user || {};
+          const address = customer.address || {};
+          const items = transaction.cartItems || [];
+          const paymentDetails = transaction.paymentDetails || {};
+          const cardDetails = paymentDetails.card || {};
+
+          const subtotal = transaction.paymentDetails?.amount ||
+            items.reduce((sum, item) => sum + ((item.product?.price || 0) * (item.quantity || 0)), 0);
+
+          return {
+            _id: transaction._id,
+            isTransaction: true,
+            customer: {
+              name: customer.name || 'Customer',
+              email: customer.email || 'email@example.com',
+              phone: customer.phone || '000-000-0000',
+              address: address.line1 || 'Address not provided',
+              city: address.city || 'CITY NOT PROVIDED',
+              country: address.country || 'COUNTRY NOT PROVIDED',
+              zipCode: address.postal_code || '00000'
+            },
+            products: items.map(item => ({
+              _id: item.product?._id || Math.random().toString(36).substr(2, 9),
+              name: item.product?.title || 'Product',
+              price: item.product?.price || 0,
+              quantity: item.quantity || 0,
+              totalPrice: (item.product?.price || 0) * (item.quantity || 0),
+              image: item.product?.image || 'https://via.placeholder.com/150'
+            })),
+            totalQuantity: items.reduce((sum, item) => sum + (item.quantity || 0), 0),
+            grandTotal: subtotal,
+            paymentMethod: 'Card Payment',
+            paymentStatus: paymentDetails.status || 'requires_payment_method',
+            status: transaction.status || 'processing',
+            shippingMethod: transaction.shippingMethod || 'Standard Shipping',
+            createdAt: transaction.createdAt || new Date().toISOString(),
+            payment: {
+              method: 'card',
+              details: {
+                ...paymentDetails,
+                card: cardDetails,
+                receiptUrl: paymentDetails.receiptUrl
+              },
+              orderId: transaction._id
+            }
+          };
+        });
+
+        const allOrders = [...ordersData, ...transactionsAsOrders];
+
+        allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const ordersWithPayments = allOrders.map(order => {
+          const payment = paymentsData.find(p => p.orderId === order._id) || order.payment;
           return {
             ...order,
-            payment: payment || null
+            payment: payment || {
+              method: order.paymentMethod || 'Unknown',
+              details: {},
+              orderId: order._id
+            }
           };
         });
 
         setOrders(ordersWithPayments);
-        setTotalPages(ordersResponse.data.pages || 1);
-        setTotalOrders(ordersResponse.data.total || ordersData.length);
+
+        if (viewType === 'all') {
+          setTotalPages(Math.max(
+            ordersData.pages || 1,
+            transactionsData.pages || 1
+          ));
+          setTotalOrders(ordersData.length + transactionsData.length);
+        } else {
+          setTotalPages(Math.ceil(totalCount / 10) || 1);
+          setTotalOrders(totalCount);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.response?.data?.error || err.message || "Failed to fetch data.");
+        setOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [page, statusFilter, paymentStatusFilter]);
+  }, [page, statusFilter, paymentStatusFilter, viewType]);
 
   const toggleOrderExpand = (orderId) => {
     if (expandedOrder === orderId) {
@@ -87,37 +182,63 @@ const Orders = () => {
     setEditingPaymentStatus(null);
   };
 
-  const handleStatusUpdate = async (orderId, newStatus) => {
+  const handleStatusUpdate = async (orderId, newStatus, isTransaction) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/orders/${orderId}`, {
+      const endpoint = isTransaction
+        ? `http://localhost:5000/api/transactions/${orderId}`
+        : `http://localhost:5000/api/orders/${orderId}`;
+
+      const response = await axios.put(endpoint, {
         status: newStatus
       });
 
-      if (response.data.success) {
+      if (response.data) {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus } : order
         ));
-        toast.success('Order status updated successfully');
+        toast.success('Status updated successfully');
         setEditingStatus(null);
       } else {
-        throw new Error(response.data.error || 'Failed to update order status');
+        throw new Error(response.data.error || 'Failed to update status');
       }
     } catch (err) {
-      console.error('Error updating order status:', err);
-      toast.error(err.response?.data?.error || err.message || 'Failed to update order status');
+      console.error('Error updating status:', err);
+      toast.error(err.response?.data?.error || err.message || 'Failed to update status');
     }
   };
 
-  const handlePaymentStatusUpdate = async (orderId, newPaymentStatus) => {
+  const handlePaymentStatusUpdate = async (orderId, newPaymentStatus, isTransaction) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/orders/${orderId}`, {
-        paymentStatus: newPaymentStatus
-      });
+      const endpoint = isTransaction
+        ? `http://localhost:5000/api/transactions/${orderId}`
+        : `http://localhost:5000/api/orders/${orderId}`;
 
-      if (response.data.success) {
-        setOrders(orders.map(order =>
-          order._id === orderId ? { ...order, paymentStatus: newPaymentStatus } : order
-        ));
+      const payload = isTransaction
+        ? { 'paymentDetails.status': newPaymentStatus }
+        : { paymentStatus: newPaymentStatus };
+
+      const response = await axios.put(endpoint, payload);
+
+      if (response.data) {
+        setOrders(orders.map(order => {
+          if (order._id === orderId) {
+            if (isTransaction) {
+              return {
+                ...order,
+                payment: {
+                  ...order.payment,
+                  details: {
+                    ...order.payment.details,
+                    status: newPaymentStatus
+                  }
+                },
+                paymentStatus: newPaymentStatus
+              };
+            }
+            return { ...order, paymentStatus: newPaymentStatus };
+          }
+          return order;
+        }));
         toast.success('Payment status updated successfully');
         setEditingPaymentStatus(null);
       } else {
@@ -129,13 +250,17 @@ const Orders = () => {
     }
   };
 
-  const handleShippingMethodUpdate = async (orderId, newShippingMethod) => {
+  const handleShippingMethodUpdate = async (orderId, newShippingMethod, isTransaction) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/orders/${orderId}`, {
+      const endpoint = isTransaction
+        ? `http://localhost:5000/api/transactions/${orderId}`
+        : `http://localhost:5000/api/orders/${orderId}`;
+
+      const response = await axios.put(endpoint, {
         shippingMethod: newShippingMethod
       });
 
-      if (response.data.success) {
+      if (response.data) {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, shippingMethod: newShippingMethod } : order
         ));
@@ -150,90 +275,207 @@ const Orders = () => {
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Delivered':
+    switch (status?.toLowerCase()) {
+      case 'delivered':
+      case 'completed':
         return <FaCheckCircle className="text-green-500" />;
-      case 'Shipped':
+      case 'shipped':
         return <FiTruck className="text-blue-500" />;
+      case 'canceled':
+      case 'failed':
+        return <FaTimesCircle className="text-red-500" />;
       default:
         return <FaClock className="text-yellow-500" />;
     }
   };
 
   const getPaymentStatusIcon = (status) => {
-    return status === 'Paid'
-      ? <FaCheckCircle className="text-green-500" />
-      : <FaTimesCircle className="text-red-500" />;
+    switch (status?.toLowerCase()) {
+      case 'paid':
+      case 'succeeded':
+        return <FaCheckCircle className="text-green-500" />;
+      case 'failed':
+        return <FaTimesCircle className="text-red-500" />;
+      default:
+        return <FaClock className="text-yellow-500" />;
+    }
+  };
+
+  const openImageModal = (imageUrl, type) => {
+    setCurrentImage(imageUrl);
+    setCurrentImageType(type);
+    setIsImageModalOpen(true);
   };
 
   const renderPaymentDetails = (order) => {
-    const payment = order.payment;
-
-    if (payment === null) {
+    if (!order.payment) {
       return (
         <div className="text-center py-4 text-gray-500">
-          <p>No payment details available for this order</p>
+          <p>No payment details available for this {order.isTransaction ? 'transaction' : 'order'}</p>
         </div>
       );
     }
 
+    const payment = order.payment;
+    const details = payment.details || {};
+
     const renderDetails = () => {
-      switch (payment.method) {
-        case 'Easypaisa':
-        case 'Jazz Cash':
+      if (order.isTransaction) {
+        if (payment.method === 'card' && details.card) {
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="font-medium text-gray-600">Mobile Number</p>
-                <p className="text-gray-800">{payment.details?.mobileNumber || 'N/A'}</p>
+                <p className="font-medium text-gray-600">Card Brand</p>
+                <p className="text-gray-800 capitalize">
+                  {details.card.brand || 'Visa/Mastercard'} 
+                </p>
               </div>
               <div>
-                <p className="font-medium text-gray-600">Transaction ID</p>
-                <p className="text-gray-800">{payment.details?.transactionId || 'N/A'}</p>
+                <p className="font-medium text-gray-600">Card last 4 Digits</p>
+                <p className="text-gray-800">
+                  {details.card.last4 ? `•••• •••• •••• ${details.card.last4}` : '•••• •••• •••• 4242'} 
+                </p>
               </div>
               <div>
-                <p className="font-medium text-gray-600">CNIC</p>
-                <p className="text-gray-800">{payment.details?.cnic || 'N/A'}</p>
+                <p className="font-medium text-gray-600">Expiration Date</p>
+                <p className="text-gray-800">
+                  {details.card.exp_month && details.card.exp_year
+                    ? `${details.card.exp_month}/${details.card.exp_year.toString().slice(-2)}`
+                    : 'MM/YY'}
+                </p>
               </div>
+              <div>
+                <p className="font-medium text-gray-600">Payment Intent ID</p>
+                <p className="text-gray-800 font-mono text-sm break-all">
+                  {details.paymentIntentId || 'Not available'}
+                </p>
+              </div>
+
+              {details.receiptUrl && (
+                <div className="md:col-span-2">
+                  <a
+                    href={details.receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-600 hover:underline flex items-center"
+                  >
+                    <FiFile className="mr-2" />
+                    View Stripe Receipt
+                  </a>
+                </div>
+              )}
             </div>
           );
-        case 'Bank Account Transfer':
-        case 'Bank Transfer':
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-gray-600">Account Title</p>
-                <p className="text-gray-800">{payment.details?.accountTitle || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Bank Name</p>
-                <p className="text-gray-800">{payment.details?.bankName || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Account Number</p>
-                <p className="text-gray-800">{payment.details?.senderAccountNumber || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Transfer Date</p>
-                <p className="text-gray-800">{payment.details?.transferDate || 'N/A'}</p>
-              </div>
+        }
+        <td className="px-4 py-2 whitespace-nowrap border-r border-gray-300">
+          <div
+            className="cursor-pointer"
+            onClick={() => openImageModal(
+              product.image || 'https://via.placeholder.com/150?text=No+Image',
+              'product'
+            )}
+          >
+            <img
+              src={product.image || 'https://via.placeholder.com/150?text=No+Image'}
+              alt={product.name}
+              className="h-12 w-12 object-cover rounded-md border hover:shadow-md transition-shadow"
+            />
+          </div>
+        </td>
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="font-medium text-gray-600">Payment Method</p>
+              <p className="text-gray-800 capitalize">{payment.method || 'N/A'}</p>
             </div>
-          );
-        case 'Cash on Delivery':
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-gray-600">Recipient Name</p>
-                <p className="text-gray-800">{payment.details?.recipientName || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Delivery Address</p>
-                <p className="text-gray-800">{payment.details?.deliveryAddress || 'N/A'}</p>
-              </div>
+            <div>
+              <p className="font-medium text-gray-600">Status</p>
+              <p className="text-gray-800 capitalize">{details.status || 'N/A'}</p>
             </div>
-          );
-        default:
-          return <p className="text-gray-500">Payment details not available</p>;
+            <div>
+              <p className="font-medium text-gray-600">Amount</p>
+              <p className="text-gray-800">Rs.{details.amount?.toFixed(2) || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-600">Currency</p>
+              <p className="text-gray-800 uppercase">{details.currency || 'PKR'}</p>
+            </div>
+          </div>
+        );
+      } else {
+        switch (payment.method) {
+          case 'Easypaisa':
+          case 'Jazz Cash':
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-gray-600">Mobile Number</p>
+                  <p className="text-gray-800">{details.mobileNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600">Transaction ID</p>
+                  <p className="text-gray-800">{details.transactionId || 'N/A'}</p>
+                </div>
+                {details.cnic && (
+                  <div>
+                    <p className="font-medium text-gray-600">CNIC</p>
+                    <p className="text-gray-800">{details.cnic}</p>
+                  </div>
+                )}
+              </div>
+            );
+          case 'Bank Account Transfer':
+          case 'Bank Transfer':
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-gray-600">Account Title</p>
+                  <p className="text-gray-800">{details.accountTitle || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600">Bank Name</p>
+                  <p className="text-gray-800">{details.bankName || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600">Account Number</p>
+                  <p className="text-gray-800">{details.accountNumber || details.senderAccountNumber || 'N/A'}</p>
+                </div>
+                {details.transferDate && (
+                  <div>
+                    <p className="font-medium text-gray-600">Transfer Date</p>
+                    <p className="text-gray-800">{details.transferDate}</p>
+                  </div>
+                )}
+              </div>
+            );
+          case 'Cash on Delivery':
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-gray-600">Recipient Name</p>
+                  <p className="text-gray-800">{details.recipientName || order.customer.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-600">Delivery Address</p>
+                  <p className="text-gray-800">{details.deliveryAddress || order.customer.address || 'N/A'}</p>
+                </div>
+              </div>
+            );
+          default:
+            return (
+              <div>
+                <p className="text-gray-500">Payment method: {payment.method}</p>
+                {Object.keys(details).length > 0 && (
+                  <div className="mt-2">
+                    <p className="font-medium text-gray-600">Additional Details:</p>
+                    <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                      {JSON.stringify(details, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            );
+        }
       }
     };
 
@@ -241,21 +483,21 @@ const Orders = () => {
       <div className="mt-4">
         <h4 className="font-semibold text-gray-700 mb-4 flex items-center">
           <FiCreditCard className="mr-2" />
-          Payment Details ({payment.method})
+          Payment Details ({payment.method || 'Unknown'})
         </h4>
         {renderDetails()}
 
-        {payment.details?.paymentProof && (
+        {details.paymentProof && !order.isTransaction && (
           <div className="mt-6">
             <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
               <FiFile className="mr-2" />
               Payment Proof
             </h4>
             <div className="border rounded-2xl p-4 bg-gray-50">
-              {payment.details.paymentProof.endsWith('.pdf') ? (
+              {details.paymentProof.endsWith('.pdf') ? (
                 <div>
                   <a
-                    href={`http://localhost:5000/${payment.details.paymentProof}`}
+                    href={`http://localhost:5000/${details.paymentProof}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-cyan-600 hover:underline flex items-center mb-2"
@@ -264,98 +506,98 @@ const Orders = () => {
                     View PDF Receipt
                   </a>
                   <iframe
-                    src={`http://localhost:5000/${payment.details.paymentProof}`}
+                    src={`http://localhost:5000/${details.paymentProof}`}
                     className="w-full h-64 border rounded"
                     title="Payment proof PDF"
                   />
                 </div>
               ) : (
-                <div>
-                  {isImageModalOpen && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/20 backdrop-blur-sm"
-                      onClick={() => setIsImageModalOpen(false)}
-                    >
-                      <div className="relative w-full max-w-4xl max-h-[90vh]">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsImageModalOpen(false);
-                          }}
-                          className="absolute -top-20 -right-64 rounded-full text-black bg-white/45 hover:bg-white/60 transition-colors p-2"
-                          aria-label="Close modal"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={1.5}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-
-                        <motion.div
-                         
-                        >
-                          <img
-                            src={`http://localhost:5000/${payment.details.paymentProof}`}
-                            alt="Payment proof"
-                            className="w-full h-auto max-h-[80vh] rounded-lg object-contain"
-                          />
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  )}
-
+                <div className="relative group cursor-pointer w-fit mx-auto">
                   <div
-                    className="relative group cursor-pointer w-fit mx-auto"
-                    onClick={() => setIsImageModalOpen(true)}
+                    className="relative overflow-hidden rounded-2xl border-2 border-gray-200 group-hover:border-indigo-400 transition-all duration-300"
+                    onClick={() => openImageModal(`http://localhost:5000/${details.paymentProof}`, 'payment')}
                   >
-                    <div className="relative overflow-hidden rounded-2xl border-2 border-gray-200 group-hover:border-indigo-400 transition-all duration-300">
-                      <img
-                        src={`http://localhost:5000/${payment.details.paymentProof}`}
-                        alt="Payment proof thumbnail"
-                        className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <div className="bg-white/90 p-3 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 text-indigo-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                            />
-                          </svg>
-                        </div>
+                    <img
+                      src={`http://localhost:5000/${details.paymentProof}`}
+                      alt="Payment proof thumbnail"
+                      className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="bg-white/90 p-3 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6 text-indigo-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                          />
+                        </svg>
                       </div>
                     </div>
-                    <p className="text-center text-sm text-gray-500 mt-3">
-                      Click to view full screen
-                    </p>
                   </div>
+                  <p className="text-center text-sm text-gray-500 mt-3">
+                    Click to view full screen
+                  </p>
                 </div>
               )}
             </div>
           </div>
         )}
       </div>
+    );
+  };
+
+  const ImageModal = () => {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={() => setIsImageModalOpen(false)}
+      >
+        <div className="relative w-full max-w-6xl max-h-[90vh]">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsImageModalOpen(false);
+            }}
+            className="absolute -top-12 -right-12 rounded-full text-white bg-white/20 hover:bg-white/30 transition-colors p-3"
+            aria-label="Close modal"
+          >
+            <FiX className="h-6 w-6" />
+          </button>
+
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {currentImageType === 'payment' ? (
+              <img
+                src={currentImage}
+                alt="Payment proof"
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            ) : (
+              <div className="p-6">
+                <h3 className="text-xl text-white font-bold mb-4">Product Image</h3>
+                <img
+                  src={currentImage}
+                  alt="Product"
+                  className="w-auto h-auto max-h-[70vh] rounded-2xl mx-auto"
+                />
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </motion.div>
     );
   };
 
@@ -368,7 +610,6 @@ const Orders = () => {
       ></motion.div>
     </div>
   );
-  
 
   if (error) return (
     <motion.div
@@ -384,17 +625,45 @@ const Orders = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <AnimatePresence>
+        {isImageModalOpen && <ImageModal />}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center mb-8"
+        className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center">
           <FiPackage className="mr-3 text-indigo-600" />
-          Order Management
+          Orders Management
         </h1>
-        <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-          Showing {((page - 1) * 10) + 1}-{Math.min(page * 10, totalOrders)} of {totalOrders} orders
+
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setViewType('all')}
+              className={`px-3 py-1 rounded-full text-sm font-medium ${viewType === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setViewType('orders')}
+              className={`px-3 py-1 rounded-full text-sm font-medium ${viewType === 'orders' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            >
+              Orders
+            </button>
+            <button
+              onClick={() => setViewType('transactions')}
+              className={`px-3 py-1 rounded-full text-sm font-medium ${viewType === 'transactions' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            >
+              Card Payment Orders
+            </button>
+          </div>
+
+          <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            Showing {((page - 1) * 10) + 1}-{Math.min(page * 10, totalOrders)} of {totalOrders} records
+          </div>
         </div>
       </motion.div>
 
@@ -410,10 +679,22 @@ const Orders = () => {
             className="border rounded p-2 text-gray-700 font-semibold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           >
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Processing">Processing</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
+            {viewType !== 'transactions' && (
+              <>
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+              </>
+            )}
+            {viewType !== 'orders' && (
+              <>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="completed">Completed</option>
+                <option value="canceled">Canceled</option>
+              </>
+            )}
           </select>
         </div>
 
@@ -428,9 +709,20 @@ const Orders = () => {
             className="border rounded p-2 text-gray-700 font-semibold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           >
             <option value="">All Payments</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-            <option value="Unpaid">Unpaid</option>
+            {viewType !== 'transactions' && (
+              <>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="Unpaid">Unpaid</option>
+              </>
+            )}
+            {viewType !== 'orders' && (
+              <>
+                <option value="succeeded">Succeeded</option>
+                <option value="requires_payment_method">Requires Payment</option>
+                <option value="failed">Failed</option>
+              </>
+            )}
           </select>
         </div>
       </div>
@@ -442,21 +734,25 @@ const Orders = () => {
           className="bg-white rounded-lg shadow p-8 text-center"
         >
           <FiPackage className="mx-auto text-4xl text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700">No Orders Found</h2>
-          <p className="text-gray-500 mt-2">Your order list is currently empty</p>
+          <h2 className="text-xl font-semibold text-gray-700">No Records Found</h2>
+          <p className="text-gray-500 mt-2">Your {viewType === 'all' ? 'order and transaction' : viewType} list is currently empty</p>
         </motion.div>
       ) : (
         <div className="space-y-4">
           {orders.map((order, index) => {
             const orderNumber = ((page - 1) * 10) + index + 1;
+            const isTransaction = order.isTransaction;
+            const paymentStatus = isTransaction
+              ? order.payment?.details?.status || 'requires_payment_method'
+              : order.paymentStatus;
+
             return (
               <motion.div
                 key={order._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${expandedOrder === order._id ? 'ring-2 ring-indigo-500' : 'hover:shadow-lg'
-                  }`}
+                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${expandedOrder === order._id ? 'ring-2 ring-indigo-500' : 'hover:shadow-lg'}`}
               >
                 <motion.div
                   className="p-5 cursor-pointer flex justify-between items-center"
@@ -471,7 +767,9 @@ const Orders = () => {
                       <FiPackage className="text-xl" />
                     </div>
                     <div>
-                      <h2 className="font-bold text-gray-800">Order #{order._id.slice(-8).toUpperCase()}</h2>
+                      <h2 className="font-bold text-gray-800">
+                        {isTransaction ? 'Card Payment Orders' : 'Order'} #{order._id.slice(-8).toUpperCase()}
+                      </h2>
                       <p className="text-sm text-gray-500">
                         {new Date(order.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -486,17 +784,19 @@ const Orders = () => {
                   <div className="flex items-center space-x-4 sm:space-x-6">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(order.status)}
-                      <span className={`text-xs sm:text-sm font-medium ${order.status === 'Delivered' ? 'text-green-600' :
-                        order.status === 'Shipped' ? 'text-blue-600' : 'text-yellow-600'
+                      <span className={`text-xs sm:text-sm font-medium ${['delivered', 'completed'].includes(order.status?.toLowerCase()) ? 'text-green-600' :
+                          ['shipped'].includes(order.status?.toLowerCase()) ? 'text-blue-600' :
+                            ['canceled', 'failed'].includes(order.status?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
                         }`}>
                         {order.status}
                       </span>
                     </div>
                     <div className="hidden sm:flex items-center space-x-2">
-                      {getPaymentStatusIcon(order.paymentStatus)}
-                      <span className={`text-xs sm:text-sm font-medium ${order.paymentStatus === 'Paid' ? 'text-green-600' : 'text-red-600'
+                      {getPaymentStatusIcon(paymentStatus)}
+                      <span className={`text-xs sm:text-sm font-medium ${['paid', 'succeeded'].includes(paymentStatus?.toLowerCase()) ? 'text-green-600' :
+                          ['failed'].includes(paymentStatus?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
                         }`}>
-                        {order.paymentStatus}
+                        {paymentStatus.replace('_', ' ')}
                       </span>
                     </div>
                     <div className="text-lg sm:text-xl font-bold text-gray-800">
@@ -556,7 +856,9 @@ const Orders = () => {
                           >
                             <div className="flex items-center mb-3">
                               <FiCalendar className="text-gray-500 mr-2" />
-                              <h3 className="font-semibold text-gray-700">Order Details</h3>
+                              <h3 className="font-semibold text-gray-700">
+                                {isTransaction ? 'Transaction' : 'Order'} Details
+                              </h3>
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
@@ -567,7 +869,7 @@ const Orders = () => {
                                       e.stopPropagation();
                                       const newMethod = prompt("Enter new shipping method:", order.shippingMethod);
                                       if (newMethod && newMethod !== order.shippingMethod) {
-                                        handleShippingMethodUpdate(order._id, newMethod);
+                                        handleShippingMethodUpdate(order._id, newMethod, isTransaction);
                                       }
                                     }}
                                     className="text-cyan-600 hover:text-cyan-800 transition-colors"
@@ -599,13 +901,23 @@ const Orders = () => {
                                     className="mt-1 flex items-center space-x-2"
                                   >
                                     <select
-                                      value={order.paymentStatus}
-                                      onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value)}
+                                      value={paymentStatus}
+                                      onChange={(e) => handlePaymentStatusUpdate(order._id, e.target.value, isTransaction)}
                                       className="border text-gray-800 rounded p-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                     >
-                                      <option value="Paid">Paid</option>
-                                      <option value="Pending">Pending</option>
-                                      <option value="Unpaid">Unpaid</option>
+                                      {isTransaction ? (
+                                        <>
+                                          <option value="succeeded">Succeeded</option>
+                                          <option value="requires_payment_method">Requires Payment</option>
+                                          <option value="failed">Failed</option>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <option value="Paid">Paid</option>
+                                          <option value="Pending">Pending</option>
+                                          <option value="Unpaid">Unpaid</option>
+                                        </>
+                                      )}
                                     </select>
                                     <button
                                       onClick={() => setEditingPaymentStatus(null)}
@@ -616,13 +928,13 @@ const Orders = () => {
                                   </motion.div>
                                 ) : (
                                   <p className="flex items-center text-gray-800 mt-1">
-                                    <FiCreditCard className="mr-1" /> {order.paymentStatus}
+                                    <FiCreditCard className="mr-1" /> {paymentStatus.replace('_', ' ')}
                                   </p>
                                 )}
                               </div>
                               <div>
                                 <p className="font-bold text-gray-600">Payment Method</p>
-                                <p className="mt-1 text-gray-800">{order.paymentMethod}</p>
+                                <p className="mt-1 text-gray-800 capitalize">{order.paymentMethod}</p>
                               </div>
                               <div>
                                 <div className="flex items-center justify-between">
@@ -645,13 +957,24 @@ const Orders = () => {
                                   >
                                     <select
                                       value={order.status}
-                                      onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
+                                      onChange={(e) => handleStatusUpdate(order._id, e.target.value, isTransaction)}
                                       className="border rounded text-gray-800 p-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                                     >
-                                      <option value="Pending">Pending</option>
-                                      <option value="Processing">Processing</option>
-                                      <option value="Shipped">Shipped</option>
-                                      <option value="Delivered">Delivered</option>
+                                      {isTransaction ? (
+                                        <>
+                                          <option value="processing">Processing</option>
+                                          <option value="shipped">Shipped</option>
+                                          <option value="completed">Completed</option>
+                                          <option value="canceled">Canceled</option>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <option value="Pending">Pending</option>
+                                          <option value="Processing">Processing</option>
+                                          <option value="Shipped">Shipped</option>
+                                          <option value="Delivered">Delivered</option>
+                                        </>
+                                      )}
                                     </select>
                                     <button
                                       onClick={() => setEditingStatus(null)}
@@ -703,14 +1026,19 @@ const Orders = () => {
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       transition={{ duration: 0.3 }}
-                                      className="divide-x divide-gray-300" 
+                                      className="divide-x divide-gray-300"
                                     >
                                       <td className="px-4 py-2 whitespace-nowrap border-r border-gray-300">
-                                        <img
-                                          src={product.image}
-                                          alt={product.name}
-                                          className="h-12 w-12 object-cover rounded-md border"
-                                        />
+                                        <div
+                                          className="cursor-pointer"
+                                          onClick={() => openImageModal(product.image, 'product')}
+                                        >
+                                          <img
+                                            src={product.image}
+                                            alt={product.name}
+                                            className="h-12 w-12 object-cover rounded-md border hover:shadow-md transition-shadow"
+                                          />
+                                        </div>
                                       </td>
                                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
                                         {product.name}
@@ -727,13 +1055,11 @@ const Orders = () => {
                                     </motion.tr>
                                   ))}
                                 </tbody>
-
                               </table>
                             </div>
                           </motion.div>
                         </div>
 
-                        {/* Summary */}
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -765,7 +1091,6 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8">
           <div className="flex space-x-2">
@@ -815,4 +1140,4 @@ const Orders = () => {
   );
 };
 
-export default Orders;
+export default OrderManagement;

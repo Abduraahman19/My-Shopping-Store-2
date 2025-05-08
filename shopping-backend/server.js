@@ -2,20 +2,28 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
+const path = require('path'); 
 const fileUpload = require('express-fileupload');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const fs = require('fs');
+
+const uploadsDir = path.join(__dirname, 'uploads/payments');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory');
+}
 
 const app = express();
 
-// Middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Database Connection (modern version)
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
@@ -29,7 +37,6 @@ const connectDB = async () => {
   }
 };
 
-// Import Routes
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const subCategoryRoutes = require('./routes/subCategoryRoutes');
@@ -38,16 +45,14 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 
-// Route Middleware
 app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/subcategories', subCategoryRoutes);
+app.use('/api', categoryRoutes);
+app.use('/api', subCategoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK',
@@ -56,7 +61,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error Handler
 app.use((err, req, res, next) => {
   console.error('🚨 Error:', err.stack);
   res.status(500).json({ 

@@ -15,19 +15,47 @@ const upload = multer({ storage });
 
 const createPayment = async (req, res) => {
   try {
-    const paymentData = req.body;
-    console.log("🚀 ~ createPayment ~ paymentData:", paymentData)
-    if (req.file) {
-      paymentData.details.paymentProof = req.file.path;
+    const { method, orderId, details } = req.body;
+
+    let paymentProofPath = null;
+    if (details.paymentProof && details.paymentProof.startsWith('data:')) {
+      const matches = details.paymentProof.match(/^data:(.+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const fileType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        const fileExt = fileType.split('/')[1] || 'bin';
+        const filename = `payment_${Date.now()}.${fileExt}`;
+        paymentProofPath = `uploads/payments/${filename}`;
+
+        const fs = require('fs');
+        const path = require('path');
+        const dir = path.dirname(paymentProofPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+
+        fs.writeFileSync(paymentProofPath, buffer);
+      }
     }
+
+    const paymentData = {
+      method,
+      orderId,
+      details: {
+        ...details,
+        paymentProof: paymentProofPath
+      }
+    };
 
     const payment = await Payment.create(paymentData);
     res.status(201).json(payment);
   } catch (error) {
+    console.error('Payment creation error:', error);
     res.status(400).json({ error: error.message });
   }
 };
-
 const getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find().sort({ createdAt: -1 });

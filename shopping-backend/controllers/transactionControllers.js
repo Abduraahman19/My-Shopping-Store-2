@@ -16,14 +16,13 @@ const handleImageUpload = (files) => {
   });
   
   return imagePaths;
-};
+};;
 
 exports.createTransaction = async (req, res) => {
   try {
     const { user, cartItems } = req.body;
     const images = handleImageUpload(req.files);
 
-    // Validation
     if (!cartItems?.length) {
       return res.status(400).json({ error: "Cart items are required" });
     }
@@ -31,26 +30,46 @@ exports.createTransaction = async (req, res) => {
       return res.status(400).json({ error: "User details are incomplete" });
     }
 
-    // Calculate amount
     const amount = cartItems.reduce((total, item) => {
       return total + (item.product?.price || 0) * (item.quantity || 1);
     }, 0);
 
-    // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: 'pkr',
-      metadata: { userId: user.id }
+      metadata: { userId: user.id },
+      payment_method_types: ['card']
     });
 
-    // Create transaction record
+    const retrievedIntent = await stripe.paymentIntents.retrieve(paymentIntent.id, {
+      expand: ['charges.data.payment_method_details.card']
+    });
+    
+    console.log('Retrieved Intent:', retrievedIntent);
+    const paymentMethod = retrievedIntent?.charges?.data[0]?.payment_method_details?.card;
+
+    const cardDetails = paymentMethod
+      ? {
+          brand: paymentMethod.brand, 
+          last4: paymentMethod.last4,  
+          exp_month: paymentMethod.exp_month, 
+          exp_year: paymentMethod.exp_year,   
+          country: paymentMethod.country,     
+          funding: paymentMethod.funding,    
+          cvc_check: paymentMethod.checks?.cvc_check 
+        }
+      : {};
+      console.log('Retrieved cardDetails:', cardDetails);
+
     const transaction = new Transaction({
       user,
       cartItems,
       paymentDetails: {
         paymentIntentId: paymentIntent.id,
         amount,
-        status: 'requires_payment_method'
+        status: 'requires_payment_method',
+        method: 'card', 
+        card: cardDetails 
       },
       images
     });
@@ -67,16 +86,17 @@ exports.createTransaction = async (req, res) => {
 
   } catch (error) {
     console.error('Transaction Error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Transaction failed',
-      details: error.message 
+      details: error.message
     });
   }
 };
 
-// [Keep other controller methods as they were]
 
-// Get All Transactions
+
+
+
 exports.getAllTransactions = async (req, res) => {
   try {
     const transactions = await Transaction.find();
@@ -86,16 +106,13 @@ exports.getAllTransactions = async (req, res) => {
   }
 };
 
-// Get Transaction by ID
 exports.getTransactionById = async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
     if (!transaction) return res.status(404).json({ error: "Transaction not found" });
     
-    // Retrieve payment details from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(transaction.paymentDetails.paymentIntentId);
     
-    // Update transaction with card details if available
     if (paymentIntent.charges.data[0]?.payment_method_details?.card) {
       transaction.paymentDetails.card = paymentIntent.charges.data[0].payment_method_details.card;
       transaction.paymentDetails.receiptUrl = paymentIntent.charges.data[0].receipt_url;
@@ -108,7 +125,6 @@ exports.getTransactionById = async (req, res) => {
   }
 };
 
-// Update Transaction
 exports.updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,13 +144,11 @@ exports.updateTransaction = async (req, res) => {
   }
 };
 
-// Delete Transaction
 exports.deleteTransaction = async (req, res) => {
   try {
     const transaction = await Transaction.findByIdAndDelete(req.params.id);
     if (!transaction) return res.status(404).json({ error: "Transaction not found" });
 
-    // Delete associated images
     transaction.images.forEach(image => {
       const imagePath = path.join(__dirname, '..', image);
       if (fs.existsSync(imagePath)) {
