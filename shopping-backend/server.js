@@ -6,6 +6,8 @@ const path = require('path');
 const fileUpload = require('express-fileupload');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const fs = require('fs');
+// Increase EventEmitter limit
+require('events').EventEmitter.defaultMaxListeners = 15;
 
 const uploadsDir = path.join(__dirname, 'uploads/payments');
 if (!fs.existsSync(uploadsDir)) {
@@ -44,6 +46,7 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const cryptoRoutes = require('./routes/cryptoRoutes'); // Added crypto routes
 
 app.use('/api/auth', authRoutes);
 app.use('/api', categoryRoutes);
@@ -52,6 +55,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/crypto', cryptoRoutes); // Added crypto routes
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 

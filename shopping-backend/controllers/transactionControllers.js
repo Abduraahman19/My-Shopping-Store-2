@@ -16,7 +16,7 @@ const handleImageUpload = (files) => {
   });
   
   return imagePaths;
-};;
+};
 
 exports.createTransaction = async (req, res) => {
   try {
@@ -71,9 +71,10 @@ exports.createTransaction = async (req, res) => {
         method: 'card', 
         card: cardDetails 
       },
-      images
+      images,
+      status: 'processing' // Explicitly set status to 'processing'
     });
-
+    
     await transaction.save();
 
     res.status(201).json({
@@ -92,10 +93,6 @@ exports.createTransaction = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 exports.getAllTransactions = async (req, res) => {
   try {

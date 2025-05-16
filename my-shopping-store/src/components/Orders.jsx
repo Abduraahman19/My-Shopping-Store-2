@@ -25,6 +25,20 @@ const OrderManagement = () => {
   const [currentImageType, setCurrentImageType] = useState('');
   const [viewType, setViewType] = useState('all');
 
+
+  // Helper functions to manage processed orders in localStorage
+  const getProcessedOrders = () => {
+    const processedOrders = localStorage.getItem('processedOrders');
+    return processedOrders ? new Set(JSON.parse(processedOrders)) : new Set();
+  };
+
+  const addProcessedOrder = (orderId) => {
+    const processedOrders = getProcessedOrders();
+    processedOrders.add(orderId);
+    localStorage.setItem('processedOrders', JSON.stringify([...processedOrders]));
+  };
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -93,6 +107,25 @@ const OrderManagement = () => {
           const subtotal = transaction.paymentDetails?.amount ||
             items.reduce((sum, item) => sum + ((item.product?.price || 0) * (item.quantity || 0)), 0);
 
+          // Check if this order has already been processed
+          const processedOrders = getProcessedOrders();
+          const isNewOrder = !processedOrders.has(transaction._id);
+
+          // Only update status if it's a new order
+          if (isNewOrder) {
+            // Update in backend
+            axios.put(`http://localhost:5000/api/transactions/${transaction._id}`, {
+              status: "Processing"
+            })
+              .then(() => {
+                // Mark as processed in localStorage
+                addProcessedOrder(transaction._id);
+              })
+              .catch(err => {
+                console.error('Error auto-updating transaction status:', err);
+              });
+          }
+
           return {
             _id: transaction._id,
             isTransaction: true,
@@ -117,7 +150,7 @@ const OrderManagement = () => {
             grandTotal: subtotal,
             paymentMethod: 'Card Payment',
             paymentStatus: paymentDetails.status || 'requires_payment_method',
-            status: transaction.status || 'processing',
+            status: isNewOrder ? "Processing" : (transaction.status || "Pending"), // Only set to Processing if new
             shippingMethod: transaction.shippingMethod || 'Standard Shipping',
             createdAt: transaction.createdAt || new Date().toISOString(),
             payment: {
@@ -131,6 +164,7 @@ const OrderManagement = () => {
             }
           };
         });
+
 
         const allOrders = [...ordersData, ...transactionsAsOrders];
 
@@ -327,13 +361,13 @@ const OrderManagement = () => {
               <div>
                 <p className="font-medium text-gray-600">Card Brand</p>
                 <p className="text-gray-800 capitalize">
-                  {details.card.brand || 'Visa/Mastercard'} 
+                  {details.card.brand || 'Visa/Mastercard'}
                 </p>
               </div>
               <div>
                 <p className="font-medium text-gray-600">Card last 4 Digits</p>
                 <p className="text-gray-800">
-                  {details.card.last4 ? `•••• •••• •••• ${details.card.last4}` : '•••• •••• •••• 4242'} 
+                  {details.card.last4 ? `•••• •••• •••• ${details.card.last4}` : '•••• •••• •••• 4242'}
                 </p>
               </div>
               <div>
@@ -367,21 +401,6 @@ const OrderManagement = () => {
             </div>
           );
         }
-        <td className="px-4 py-2 whitespace-nowrap border-r border-gray-300">
-          <div
-            className="cursor-pointer"
-            onClick={() => openImageModal(
-              product.image || 'https://via.placeholder.com/150?text=No+Image',
-              'product'
-            )}
-          >
-            <img
-              src={product.image || 'https://via.placeholder.com/150?text=No+Image'}
-              alt={product.name}
-              className="h-12 w-12 object-cover rounded-md border hover:shadow-md transition-shadow"
-            />
-          </div>
-        </td>
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -679,22 +698,12 @@ const OrderManagement = () => {
             className="border rounded p-2 text-gray-700 font-semibold text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           >
             <option value="">All Statuses</option>
-            {viewType !== 'transactions' && (
-              <>
-                <option value="Pending">Pending</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-              </>
-            )}
-            {viewType !== 'orders' && (
-              <>
-                <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
-                <option value="completed">Completed</option>
-                <option value="canceled">Canceled</option>
-              </>
-            )}
+            {/* Modified status options to be consistent between both transaction and regular orders */}
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Canceled">Canceled</option>
           </select>
         </div>
 
@@ -785,8 +794,8 @@ const OrderManagement = () => {
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(order.status)}
                       <span className={`text-xs sm:text-sm font-medium ${['delivered', 'completed'].includes(order.status?.toLowerCase()) ? 'text-green-600' :
-                          ['shipped'].includes(order.status?.toLowerCase()) ? 'text-blue-600' :
-                            ['canceled', 'failed'].includes(order.status?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
+                        ['shipped'].includes(order.status?.toLowerCase()) ? 'text-blue-600' :
+                          ['canceled', 'failed'].includes(order.status?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
                         }`}>
                         {order.status}
                       </span>
@@ -794,7 +803,7 @@ const OrderManagement = () => {
                     <div className="hidden sm:flex items-center space-x-2">
                       {getPaymentStatusIcon(paymentStatus)}
                       <span className={`text-xs sm:text-sm font-medium ${['paid', 'succeeded'].includes(paymentStatus?.toLowerCase()) ? 'text-green-600' :
-                          ['failed'].includes(paymentStatus?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
+                        ['failed'].includes(paymentStatus?.toLowerCase()) ? 'text-red-600' : 'text-yellow-600'
                         }`}>
                         {paymentStatus.replace('_', ' ')}
                       </span>
