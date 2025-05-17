@@ -4,20 +4,27 @@ const crypto = require('crypto');
 // Create new crypto payment
 exports.createPayment = async (req, res) => {
   try {
-    const { amount, currency = 'USD', customer, items } = req.body;
+    const {
+      amount,
+      currency = 'USD',
+      cryptoCurrency = 'BTC',
+      customer,
+      items
+    } = req.body;
+
     const transactionId = 'crypto_' + crypto.randomBytes(8).toString('hex');
 
-    // Mock response - replace with actual API call in production
+    // Mock response (replace this with real CoinPayments API call)
     const mockResponse = {
       error: 'ok',
       result: {
         amount: amount,
-        txn_id: 'CP'+crypto.randomBytes(8).toString('hex').toUpperCase(),
-        address: '3ExampleBTCAddressForTestingOnly',
+        txn_id: 'CP' + crypto.randomBytes(8).toString('hex').toUpperCase(),
+        address: `${cryptoCurrency}_WalletAddress_ForTestingOnly`,
         confirms_needed: '3',
         timeout: 3600,
         status_url: 'https://www.coinpayments.net/status-page',
-        qrcode_url: 'https://www.coinpayments.net/qrgen.php?id=CPTEST123&key=TEST'
+        qrcode_url: `https://www.coinpayments.net/qrgen.php?id=CPTEST123&key=${cryptoCurrency}`
       }
     };
 
@@ -25,7 +32,7 @@ exports.createPayment = async (req, res) => {
       amount,
       currency,
       cryptoAmount: mockResponse.result.amount,
-      cryptoCurrency: 'BTC',
+      cryptoCurrency,
       transactionId,
       coinpaymentsTxnId: mockResponse.result.txn_id,
       walletAddress: mockResponse.result.address,
@@ -42,7 +49,8 @@ exports.createPayment = async (req, res) => {
         ...mockResponse.result,
         transactionId,
         customer,
-        items
+        items,
+        cryptoCurrency
       }
     });
 
@@ -60,7 +68,7 @@ exports.handleIPN = async (req, res) => {
       return res.status(400).send('Invalid IPN mode');
     }
 
-    const payment = await CryptoPayment.findOne({ 
+    const payment = await CryptoPayment.findOne({
       $or: [
         { coinpaymentsTxnId: txn_id },
         { transactionId: invoice }
@@ -83,7 +91,7 @@ exports.handleIPN = async (req, res) => {
   }
 };
 
-// Get payment by ID
+// Get single payment
 exports.getPayment = async (req, res) => {
   try {
     const payment = await CryptoPayment.findById(req.params.id);
@@ -135,34 +143,3 @@ exports.deletePayment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// IPN handler
-// exports.handleIPN = async (req, res) => {
-//   try {
-//     const { ipn_mode, txn_id, status } = req.body;
-
-//     if (ipn_mode !== 'hmac') {
-//       return res.status(400).json({ error: 'Invalid IPN mode' });
-//     }
-
-//     const payment = await CryptoPayment.findOne({ coinpaymentsTxnId: txn_id });
-//     if (!payment) {
-//       return res.status(404).json({ error: 'Transaction not found' });
-//     }
-
-//     let paymentStatus = 'pending';
-//     if (status >= 100 || status === 2) {
-//       paymentStatus = 'completed';
-//     } else if (status < 0) {
-//       paymentStatus = 'failed';
-//     }
-
-//     payment.status = paymentStatus;
-//     await payment.save();
-
-//     res.status(200).send('IPN received');
-//   } catch (error) {
-//     console.error('IPN Error:', error);
-//     res.status(500).send('IPN processing failed');
-//   }
-// };
